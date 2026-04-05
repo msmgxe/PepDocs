@@ -1,0 +1,6 @@
+node_modules/
+.DS_Store
+admin/
+mobile/
+store/
+supabase_backup/
