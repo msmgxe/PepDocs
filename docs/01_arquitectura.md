@@ -164,12 +164,18 @@ WHERE auth_uid = user.id AsyncStorage
 │  app/(app)/...          → Con sidebar + header       │
 ├─────────────────────────────────────────────────────┤
 │               COMPONENTES DE LAYOUT                  │
+│  layout/layout-shell.tsx — Client wrapper: sidebar   │
+│                            position (flex-row-reverse)│
 │  layout/header-bar.tsx  — Búsqueda + notificaciones  │
+│                            + preferencias (tamaño,   │
+│                            posición panel lateral)   │
 │  layout/logout-button.tsx — Cierre de sesión         │
 ├─────────────────────────────────────────────────────┤
 │                PÁGINAS (Client Components)           │
 │  page.tsx (dashboard)   calendario/   analisis/      │
 │  usuarios/              whatsapp/     login/         │
+│                         analisis/ incluye Simulador  │
+│                         modal (Tirzepatide SURMOUNT) │
 ├─────────────────────────────────────────────────────┤
 │                    UTILIDADES                        │
 │  lib/supabase.ts        lib/utils.ts (cn helper)     │

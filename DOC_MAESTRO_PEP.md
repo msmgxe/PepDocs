@@ -318,12 +318,18 @@ WHERE auth_uid = user.id AsyncStorage
 │  app/(app)/...          → Con sidebar + header       │
 ├─────────────────────────────────────────────────────┤
 │               COMPONENTES DE LAYOUT                  │
+│  layout/layout-shell.tsx — Client wrapper: sidebar   │
+│                            position (flex-row-reverse)│
 │  layout/header-bar.tsx  — Búsqueda + notificaciones  │
+│                            + preferencias (tamaño,   │
+│                            posición panel lateral)   │
 │  layout/logout-button.tsx — Cierre de sesión         │
 ├─────────────────────────────────────────────────────┤
 │                PÁGINAS (Client Components)           │
 │  page.tsx (dashboard)   calendario/   analisis/      │
 │  usuarios/              whatsapp/     login/         │
+│                         analisis/ incluye Simulador  │
+│                         modal (Tirzepatide SURMOUNT) │
 ├─────────────────────────────────────────────────────┤
 │                    UTILIDADES                        │
 │  lib/supabase.ts        lib/utils.ts (cn helper)     │
@@ -683,21 +689,22 @@ admin/
 │   │   │   └── login/
 │   │   │       └── page.tsx           # Pantalla de login
 │   │   └── (app)/                     # Rutas con sidebar (autenticadas)
-│   │       ├── layout.tsx             # Sidebar + Header + BottomNav mobile
+│   │       ├── layout.tsx             # Sidebar + Header + BottomNav mobile (usa LayoutShell)
 │   │       ├── page.tsx               # Dashboard principal
 │   │       ├── usuarios/
 │   │       │   └── page.tsx           # Lista y gestión de pacientes
 │   │       ├── calendario/
 │   │       │   └── page.tsx           # Calendario de citas
 │   │       ├── analisis/
-│   │       │   └── page.tsx           # Análisis clínico Tirzepatide
+│   │       │   └── page.tsx           # Análisis clínico Tirzepatide + Simulador modal
 │   │       ├── whatsapp/
 │   │       │   └── page.tsx           # Broadcasting masivo
 │   │       └── update-password/
 │   │           └── page.tsx           # Cambio de contraseña (admin)
 │   ├── components/
 │   │   └── layout/
-│   │       ├── header-bar.tsx         # Header: búsqueda, notificaciones, theme
+│   │       ├── layout-shell.tsx       # Client Component: flex container con sidebar position
+│   │       ├── header-bar.tsx         # Header: búsqueda, notificaciones, preferencias
 │   │       └── logout-button.tsx      # Botón de cierre de sesión
 │   └── lib/
 │       ├── supabase.ts                # Inicialización cliente Supabase
@@ -706,7 +713,7 @@ admin/
 ├── .env.local                         # Variables de entorno locales (NO commitear)
 ├── .env.local.example                 # Template sin valores sensibles
 ├── next.config.ts                     # Configuración de Next.js
-├── tailwind.config.ts                 # Configuración de Tailwind
+├── tailwind.config.ts                 # Configuración de Tailwind (darkMode: 'class')
 ├── tsconfig.json                      # Configuración TypeScript
 └── package.json                       # Dependencias
 ```
@@ -752,10 +759,10 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key del proyecto Supabase>
 - Lista de eventos del día seleccionado
 
 ### `/analisis` — Análisis Clínico
-- Gráfico de evolución de peso con rangos clínicos de Tirzepatide
-- Comparación peso real vs. curva clínica esperada
+- Gráfico de evolución de peso con rangos clínicos de Tirzepatide (SVG puro)
+- Comparación peso real vs. curva clínica esperada (SURMOUNT-1)
 - Tabla de historial de pesajes
-- Visualización SVG puro (sin dependencias de gráficos)
+- **Simulador** (botón morado): modal con input de semana, calcula pérdida esperada vs. real y muestra gráfica comparativa SVG interactiva
 
 ### `/whatsapp` (Broadcasting) — Mensajes Masivos
 - Composición de mensaje de texto
@@ -794,10 +801,16 @@ export const supabase = createClient(
 git add .
 git commit -m "feat: descripción del cambio"
 git push origin main
-# Vercel detecta el push y despliega automáticamente
-# URL de preview disponible en el PR (si se usa)
-# Producción se actualiza en ~1-2 minutos
+# Vercel detecta el push y despliega automáticamente (~1-2 min)
 ```
+
+> ⚠️ **Crítico:** El git `user.email` debe estar configurado como la cuenta de GitHub para que Vercel acepte el commit. Si el email local no coincide con ningún usuario de GitHub, Vercel bloquea el deploy con "could not associate the committer with a GitHub user".
+>
+> Configuración correcta para este repo:
+> ```bash
+> git config user.email "msmgxe@users.noreply.github.com"
+> git config user.name "msmgxe"
+> ```
 
 ### Deploy manual desde CLI
 ```bash
