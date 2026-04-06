@@ -16,9 +16,9 @@ Usa este documento al inicio de cada sesión para recordar el contexto completo 
 
 ```
 Pep/
-├── admin/    → Web admin (Next.js 14 + Tailwind, Netlify)
-├── mobile/   → App v1 (Expo 54, dev/simulador)
-└── store/    → App v2 (EAS, tiendas)
+├── admin/    → Web admin (Next.js 16 + Tailwind, Vercel)
+├── mobile/   → App Expo (iOS/Android)
+└── docs/     → Documentación adicional
 ```
 
 ---
@@ -44,8 +44,8 @@ Pep/
 
 ## Supabase
 
-- **Project ID:** `ffuqngbusqmdsezgpztg`
-- **URL:** `https://ffuqngbusqmdsezgpztg.supabase.co`
+- **Project ID:** `mpdpbfaorquuqvhawwea`
+- **URL:** `https://mpdpbfaorquuqvhawwea.supabase.co`
 - **Anon key:** en `mobile/.env` y `store/eas.json`
 
 ### Tablas
@@ -218,10 +218,10 @@ mobile/
 
 admin/
 └── src/app/
-    ├── page.tsx              — Dashboard con .in("role",["patient","usuario"])
-    ├── usuarios/page.tsx     — Lista usuarios con mismo filtro
-    ├── calendario/page.tsx   — Calendario con mismo filtro
-    └── whatsapp/page.tsx     — WhatsApp con mismo filtro
+    ├── page.tsx              — Dashboard (Admin role)
+    ├── usuarios/page.tsx     — Lista pacientes
+    ├── calendario/page.tsx   — Agenda
+    └── whatsapp/page.tsx     — Notificaciones
 
 store/                        — Copia de mobile para tiendas
 ├── app.json                  — bundleIdentifier: com.pepeducation.app

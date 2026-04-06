@@ -1,8 +1,8 @@
 # Guía de Despliegue — Pep Education
 
-> Última actualización: 2026-03-31
-> Proyecto: Admin Web (Next.js) + App Móvil iOS/Android (Expo)
-> Backend: Supabase (`mpdpbfaorquuqvhawwea.supabase.co`)
+> Última actualización: 2026-04-06
+> Proyecto: Admin Web (Next.js 16) + App Móvil iOS/Android (Expo)
+> Backend: Supabase (`ffuqngbusqmdsezgpztg.supabase.co`)
 
 ---
 
@@ -10,9 +10,8 @@
 
 1. [App iOS — Compartir con familiares/testers](#1-app-ios--compartir-con-familiartesters)
 2. [App Android — Generar APK](#2-app-android--generar-apk)
-3. [Admin Web — Publicar en Netlify](#3-admin-web--publicar-en-netlify)
-4. [Dominio personalizado en Netlify](#4-dominio-personalizado-en-netlify)
-5. [Resumen de variables de entorno](#5-resumen-de-variables-de-entorno)
+3. [Admin Web — Publicar en Vercel](#3-admin-web--publicar-en-vercel)
+4. [Resumen de variables de entorno](#4-resumen-de-variables-de-entorno)
 
 ---
 
