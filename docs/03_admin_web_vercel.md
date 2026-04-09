@@ -95,9 +95,13 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon key del proyecto Supabase>
 - Editar notas del médico
 
 ### `/calendario` — Citas y Eventos
-- Vista mensual de calendario
-- Crear evento modal (título, descripción, fecha, paciente)
-- Lista de eventos del día seleccionado
+- Vista mensual de calendario con colores por cita
+- Crear/editar cita: título, fecha+hora, usuario, tipo (Presencial/WhatsApp/Llamada), color (8 opciones), notas, recordatorio
+- **Editar y eliminar** cada cita desde el panel lateral (hover sobre la cita para ver botones)
+- **Notificación automática por WhatsApp** al guardar una cita con paciente asignado (abre link wa.me con mensaje pre-redactado)
+- **Recordatorio manual por WhatsApp** desde el panel lateral (botón aparece al hover si el paciente tiene teléfono)
+- **Exportar a calendario del celular** (.ics): botón en header descarga todas las citas del mes para importar en Google Calendar, Apple Calendar, etc.
+- `patient_id` nullable: permite crear citas sin asignar paciente
 
 ### `/analisis` — Análisis Clínico
 - Gráfico de evolución de peso con rangos clínicos de Tirzepatide (SVG puro)
