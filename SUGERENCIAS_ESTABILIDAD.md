@@ -10,7 +10,7 @@ Aquí tienes las 5 recomendaciones arquitectónicas para mejorar la escala de la
 * Ya tienes un Admin en Next y un Mobile en Expo, ambos con TypeScript. Usa un "monorepo" real (turborepo) o crea una carpeta compartida (ej: `packages/shared-types`).
 * Genera los tipos de datos desde Supabase:
   ```bash
-  supabase gen types typescript --project-id ffuqngbusqmdsezgpztg > types/supabase.ts
+  supabase gen types typescript --project-id mpdpbfaorquuqvhawwea > types/supabase.ts
   ```
   y comparte este archivo entre el cliente Web y Móvil.
 * **Beneficio:** Evitas falsos positivos entre cómo el Móvil inserta campos de `measurements` y la forma en que la Web los espera leer.

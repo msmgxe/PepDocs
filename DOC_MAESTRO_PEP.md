@@ -389,7 +389,6 @@ weight.tsx
 | **Anon Key (pública)** | Ver archivo `.env.local` / Vercel env vars |
 | **Dashboard** | https://supabase.com/dashboard/project/mpdpbfaorquuqvhawwea |
 
-> ⚠️ **IMPORTANTE:** Hay un segundo proyecto Supabase (`ffuqngbusqmdsezgpztg`) accesible vía MCP pero que NO contiene los datos reales de producción. Siempre usar `mpdpbfaorquuqvhawwea`.
 
 ---
 
@@ -652,11 +651,9 @@ El proyecto tiene integración MCP con Supabase para ejecutar queries directamen
 {
   "name": "supabase",
   "command": "npx",
-  "args": ["@supabase/mcp-server-supabase@latest", "--project-ref", "ffuqngbusqmdsezgpztg"]
+  "args": ["@supabase/mcp-server-supabase@latest", "--project-ref", "mpdpbfaorquuqvhawwea"]
 }
 ```
-
-> **Nota:** El MCP apunta al proyecto secundario (`ffuqngbusqmdsezgpztg`), NO al proyecto de producción. Para queries en producción, usar el SQL Editor del dashboard de Supabase directamente.
 # Pep Education — Admin Web (Next.js + Vercel)
 
 ## Información del Proyecto
@@ -1591,11 +1588,6 @@ npx eas submit --platform ios --profile production
 
 > Para ver las keys: Supabase Dashboard → Settings → API → "Project API keys"
 
-### Proyecto Secundario (SOLO MCP/desarrollo)
-| Parámetro | Valor |
-|-----------|-------|
-| **Project ID** | `ffuqngbusqmdsezgpztg` |
-| **Uso** | Acceso MCP desde Claude Code (NO contiene datos reales) |
 
 ---
 
@@ -1764,7 +1756,7 @@ FIREBASE_SERVER_KEY=<obtener de Firebase Console>
 
 ### 1. Supabase MCP
 - **Propósito:** Ejecutar SQL, gestionar tablas, revisar logs directamente desde Claude Code
-- **Proyecto conectado:** `ffuqngbusqmdsezgpztg` (proyecto secundario — NO el de producción)
+- **Proyecto conectado:** `mpdpbfaorquuqvhawwea` (proyecto de producción)
 - **Herramientas disponibles:**
   | Herramienta | Descripción |
   |-------------|-------------|
@@ -1778,7 +1770,7 @@ FIREBASE_SERVER_KEY=<obtener de Firebase Console>
   | `search_docs` | Buscar en documentación de Supabase |
   | `get_advisors` | Ver sugerencias de performance/seguridad |
 
-- **Limitación:** Solo tiene acceso al proyecto `ffuqngbusqmdsezgpztg`. El proyecto de producción `mpdpbfaorquuqvhawwea` requiere usar el SQL Editor del dashboard directamente.
+- **Nota:** Para DDL/migraciones críticas, verificar en el SQL Editor del dashboard: https://supabase.com/dashboard/project/mpdpbfaorquuqvhawwea/sql
 
 ### 2. Vercel MCP
 - **Propósito:** Gestionar deployments, ver logs, inspeccionar proyectos en Vercel

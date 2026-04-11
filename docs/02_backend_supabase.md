@@ -13,8 +13,6 @@
 | **Anon Key (pública)** | Ver archivo `.env.local` / Vercel env vars |
 | **Dashboard** | https://supabase.com/dashboard/project/mpdpbfaorquuqvhawwea |
 
-> ⚠️ **IMPORTANTE:** Hay un segundo proyecto Supabase (`ffuqngbusqmdsezgpztg`) accesible vía MCP pero que NO contiene los datos reales de producción. Siempre usar `mpdpbfaorquuqvhawwea`.
-
 ---
 
 ## Limitaciones del Plan Gratuito
@@ -276,8 +274,6 @@ El proyecto tiene integración MCP con Supabase para ejecutar queries directamen
 {
   "name": "supabase",
   "command": "npx",
-  "args": ["@supabase/mcp-server-supabase@latest", "--project-ref", "ffuqngbusqmdsezgpztg"]
+  "args": ["@supabase/mcp-server-supabase@latest", "--project-ref", "mpdpbfaorquuqvhawwea"]
 }
 ```
-
-> **Nota:** El MCP apunta al proyecto secundario (`ffuqngbusqmdsezgpztg`), NO al proyecto de producción. Para queries en producción, usar el SQL Editor del dashboard de Supabase directamente.

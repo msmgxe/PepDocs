@@ -10,7 +10,7 @@
 
 ### 1. Supabase MCP
 - **Propósito:** Ejecutar SQL, gestionar tablas, revisar logs directamente desde Claude Code
-- **Proyecto conectado:** `ffuqngbusqmdsezgpztg` (proyecto secundario — NO el de producción)
+- **Proyecto conectado:** `mpdpbfaorquuqvhawwea` (proyecto de producción)
 - **Herramientas disponibles:**
   | Herramienta | Descripción |
   |-------------|-------------|
@@ -24,7 +24,7 @@
   | `search_docs` | Buscar en documentación de Supabase |
   | `get_advisors` | Ver sugerencias de performance/seguridad |
 
-- **Limitación:** Solo tiene acceso al proyecto `ffuqngbusqmdsezgpztg`. El proyecto de producción `mpdpbfaorquuqvhawwea` requiere usar el SQL Editor del dashboard directamente.
+- **Nota:** Para DDL/migraciones críticas, verificar siempre en el SQL Editor del dashboard: https://supabase.com/dashboard/project/mpdpbfaorquuqvhawwea/sql
 
 ### 2. Vercel MCP
 - **Propósito:** Gestionar deployments, ver logs, inspeccionar proyectos en Vercel

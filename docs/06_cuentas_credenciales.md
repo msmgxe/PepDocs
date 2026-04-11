@@ -38,12 +38,6 @@
 
 > Para ver las keys: Supabase Dashboard → Settings → API → "Project API keys"
 
-### Proyecto Secundario (SOLO MCP/desarrollo)
-| Parámetro | Valor |
-|-----------|-------|
-| **Project ID** | `ffuqngbusqmdsezgpztg` |
-| **Uso** | Acceso MCP desde Claude Code (NO contiene datos reales) |
-
 ---
 
 ## Vercel

@@ -2,7 +2,7 @@
 
 > Última actualización: 2026-04-06
 > Proyecto: Admin Web (Next.js 16) + App Móvil iOS/Android (Expo)
-> Backend: Supabase (`ffuqngbusqmdsezgpztg.supabase.co`)
+> Backend: Supabase (`mpdpbfaorquuqvhawwea.supabase.co`)
 
 ---
 

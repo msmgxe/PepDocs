@@ -295,7 +295,7 @@ mcp__claude_ai_Supabase__execute_sql  — Consultar/modificar datos
 mcp__claude_ai_Supabase__apply_migration — Aplicar cambios de schema
 ```
 
-Project ID para MCP: `ffuqngbusqmdsezgpztg`
+Project ID Supabase: `mpdpbfaorquuqvhawwea`
 
 ---
 
