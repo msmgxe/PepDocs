@@ -9,9 +9,58 @@
 | Íconos adaptativos configurados | ✅ foreground, background, monochrome |
 | Splash screen configurado | ✅ |
 | Permisos declarados | ✅ Cámara, fotos |
+| Proyecto nativo Android generado (`android/`) | ✅ Listo (no requiere EAS) |
 | EAS Build configurado | ✅ Perfiles: development, production |
 | Cuenta Google Play Console | ❌ Pendiente crear ($25 único) |
 | Cuenta EAS (Expo) | ❌ Pendiente crear (gratis) |
+
+---
+
+## Build Local sin EAS (para probar en celular)
+
+El proyecto ya tiene la carpeta `android/` generada. No necesitas EAS ni cuenta de Expo para generar un APK de prueba.
+
+### APKs existentes (ya compilados)
+
+```
+mobile/android/app/build/outputs/apk/
+├── debug/app-debug.apk       ← para desarrollo/debug
+└── release/app-release.apk   ← firmado con debug.keystore (válido para pruebas)
+```
+
+Para instalar directamente desde terminal (requiere USB + ADB habilitado en el celular):
+
+```bash
+adb install /Users/marco/Proyectos/Pep/mobile/android/app/build/outputs/apk/release/app-release.apk
+```
+
+O copia el `.apk` al celular y ábrelo desde el administrador de archivos (habilitar "Instalar apps desconocidas" en Configuración).
+
+### Recompilar APK localmente
+
+Usar cuando haya cambios en el código JS/assets o en dependencias nativas:
+
+```bash
+cd /Users/marco/Proyectos/Pep/mobile
+
+# Opción A: Expo CLI (recomendado — sincroniza JS + native + assets)
+npx expo run:android --variant release
+
+# Opción B: Gradle directo (más rápido si solo cambiaron archivos JS menores)
+cd android && ./gradlew assembleRelease
+
+# El APK queda en:
+# mobile/android/app/build/outputs/apk/release/app-release.apk
+```
+
+> **Nota sobre la firma:** El `build.gradle` usa el `debug.keystore` para el build de release. Esto es válido para pruebas en dispositivo físico, pero NO para subir a Play Store (requiere keystore de producción propio).
+
+### Instalar con ADB (USB)
+
+1. En el celular: Configuración → Opciones de desarrollador → Depuración USB → Activar
+2. Conectar por USB
+3. Verificar que detecta el dispositivo: `adb devices`
+4. Instalar: `adb install -r ruta/al/app-release.apk` (la `-r` reinstala si ya existe)
 
 ---
 
