@@ -31,6 +31,11 @@ const MONTHS = [
 
 const NATIVE_KEY = (id: string) => `pep_cal_native_${id}`;
 
+// Normaliza event_date sin importar si viene como 'YYYY-MM-DD' o 'YYYY-MM-DD HH:MM:SS+00'
+function toDateStr(eventDate: string): string {
+  return (eventDate || '').substring(0, 10);
+}
+
 function chunkArray<T>(arr: T[], size: number): T[][] {
   const chunks: T[][] = [];
   for (let i = 0; i < arr.length; i += size) chunks.push(arr.slice(i, i + size));
@@ -165,11 +170,11 @@ export default function CalendarScreen() {
   const eventDays = new Set(
     events
       .filter(e => {
-        const d = new Date(e.event_date + 'T12:00:00');
+        const d = new Date(toDateStr(e.event_date) + 'T12:00:00');
         return d.getFullYear() === currentMonth.getFullYear() &&
           d.getMonth() === currentMonth.getMonth();
       })
-      .map(e => new Date(e.event_date + 'T12:00:00').getDate())
+      .map(e => new Date(toDateStr(e.event_date) + 'T12:00:00').getDate())
   );
 
   const calendarDays = buildCalendarDays(currentMonth.getFullYear(), currentMonth.getMonth());
@@ -180,12 +185,12 @@ export default function CalendarScreen() {
 
   const displayedEvents = selectedDay
     ? events.filter(e => {
-        const d = new Date(e.event_date + 'T12:00:00');
+        const d = new Date(toDateStr(e.event_date) + 'T12:00:00');
         return d.getFullYear() === currentMonth.getFullYear() &&
           d.getMonth() === currentMonth.getMonth() &&
           d.getDate() === selectedDay;
       })
-    : events.filter(e => new Date(e.event_date + 'T12:00:00') >= new Date(today.toDateString()));
+    : events.filter(e => new Date(toDateStr(e.event_date) + 'T12:00:00') >= new Date(today.toDateString()));
 
   function openNewModal() {
     setEditingEvent(null);
@@ -202,7 +207,7 @@ export default function CalendarScreen() {
 
   function openEditModal(event: any) {
     setEditingEvent(event);
-    setFormDate(new Date(event.event_date + 'T12:00:00'));
+    setFormDate(new Date(toDateStr(event.event_date) + 'T12:00:00'));
     setFormTitle(event.title);
     setFormNotes(event.notes ?? '');
     const t = new Date(); t.setHours(10, 0, 0, 0);
@@ -394,7 +399,7 @@ export default function CalendarScreen() {
                 <MaterialCommunityIcons name="bell-outline" size={20} color="#7B2D8B" />
                 <View style={styles.appointmentInfo}>
                   <Text style={[styles.appointmentDate, { color: theme.icon }]}>
-                    {new Date(item.event_date + 'T12:00:00').toLocaleDateString('es-ES', {
+                    {new Date(toDateStr(item.event_date) + 'T12:00:00').toLocaleDateString('es-ES', {
                       weekday: 'short', day: 'numeric', month: 'short',
                     })}
                   </Text>
