@@ -3,3 +3,6 @@ node_modules/
 admin/
 store/
 supabase_backup/
+mobile/ios/Pods/
+mobile/ios/build/
+mobile/node_modules/

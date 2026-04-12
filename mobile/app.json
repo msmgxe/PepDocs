@@ -70,7 +70,14 @@
           }
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "Pep necesita acceso a tu calendario para sincronizar tus recordatorios.",
+          "remindersPermission": "Pep necesita acceso a tus recordatorios para sincronizar tus citas."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
