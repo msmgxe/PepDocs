@@ -28,6 +28,11 @@
 │  /              │   │       ├── weight (Gráfico peso)             │
 │  /usuarios      │   │       ├── progress (Logros)                 │
 │  /calendario    │   │       └── calendar (Citas)                  │
+│                 │   │                                             │
+│                 │   │  ── Flutter (mobile_flutter/) ──            │
+│                 │   │  Dart / Material 3 / fl_chart               │
+│                 │   │  Sin Metro bundler — compila nativo          │
+│                 │   │  iOS + Android desde un codebase            │
 │  /analisis      │   │                                             │
 │  /whatsapp      │   │  Estado: EAS Build → App Store / Play Store │
 │  /login         │   └──────────────────┬──────────────────────────┘

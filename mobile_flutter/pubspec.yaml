@@ -1,0 +1,46 @@
+name: pep_education
+description: "Pep Education - Health & Nutrition App"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Supabase
+  supabase_flutter: ^2.8.4
+
+  # Charts
+  fl_chart: ^0.70.2
+
+  # Image picker
+  image_picker: ^1.1.2
+
+  # Calendar
+  table_calendar: ^3.1.3
+
+  # Device calendar (native sync)
+  device_calendar: ^4.3.3
+
+  # Date formatting
+  intl: ^0.20.2
+
+  # Local state
+  shared_preferences: ^2.3.5
+
+  # URL launcher (for WhatsApp)
+  url_launcher: ^6.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
