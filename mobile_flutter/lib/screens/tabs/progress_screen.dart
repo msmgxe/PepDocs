@@ -523,10 +523,8 @@ class _BodyCard extends StatelessWidget {
                   isFemale
                       ? 'assets/images/silhouette_female.svg'
                       : 'assets/images/silhouette_male.svg',
-                  width: 82,
-                  height: 148,
-                  colorFilter: ColorFilter.mode(
-                      kPrimary.withValues(alpha: 0.80), BlendMode.srcIn),
+                  width: 90,
+                  height: 160,
                   fit: BoxFit.contain,
                 ),
                 const SizedBox(height: 4),
