@@ -66,10 +66,7 @@ class _MainShellState extends State<MainShell> {
     }
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _tabs,
-      ),
+      body: _tabs[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (i) => setState(() => _currentIndex = i),

@@ -251,12 +251,23 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                         horizontalInterval: 5,
                                         getDrawingHorizontalLine: (v) =>
                                             FlLine(
-                                          color: Colors.grey[200]!,
+                                          color: kPrimary.withValues(alpha: 0.12),
                                           strokeWidth: 1,
                                         ),
                                       ),
-                                      borderData:
-                                          FlBorderData(show: false),
+                                      borderData: FlBorderData(
+                                        show: true,
+                                        border: Border(
+                                          bottom: BorderSide(
+                                            color: kPrimary.withValues(alpha: 0.25),
+                                            width: 1.5,
+                                          ),
+                                          left: BorderSide(
+                                            color: kPrimary.withValues(alpha: 0.25),
+                                            width: 1.5,
+                                          ),
+                                        ),
+                                      ),
                                       titlesData: FlTitlesData(
                                         leftTitles: AxisTitles(
                                           sideTitles: SideTitles(
@@ -267,7 +278,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                               v.toStringAsFixed(0),
                                               style: TextStyle(
                                                   fontSize: 11,
-                                                  color: Colors.grey[600]),
+                                                  color: kPrimary.withValues(alpha: 0.7)),
                                             ),
                                           ),
                                         ),
@@ -311,8 +322,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                                       : '',
                                                   style: TextStyle(
                                                       fontSize: 10,
-                                                      color:
-                                                          Colors.grey[600]),
+                                                      color: kPrimary.withValues(alpha: 0.7)),
                                                 ),
                                               );
                                             },
@@ -483,78 +493,96 @@ class _HumanPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size s) {
-    final paint = Paint()..color = color..style = PaintingStyle.fill;
+    final p = Paint()..color = color..style = PaintingStyle.fill;
     final cx = s.width / 2;
 
-    // ── Head (oval) ─────────────────────────────────────────────────────────
-    final headRx = s.width * 0.145;
-    final headRy = s.width * 0.165;
-    final headCy = headRy + s.height * 0.01;
-    canvas.drawOval(
-      Rect.fromCenter(
-          center: Offset(cx, headCy), width: headRx * 2, height: headRy * 2),
-      paint,
-    );
+    // ── Head (circle) ────────────────────────────────────────────────────────
+    final hR = s.width * 0.135;
+    final hCy = hR + s.height * 0.015;
+    canvas.drawCircle(Offset(cx, hCy), hR, p);
 
     // ── Neck ─────────────────────────────────────────────────────────────────
-    final neckW = s.width * 0.082;
-    final neckTop = headCy + headRy * 0.82;
-    final neckBot = neckTop + s.height * 0.055;
-    final neckPath = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromLTRB(cx - neckW / 2, neckTop, cx + neckW / 2, neckBot),
-        const Radius.circular(3),
-      ));
-    canvas.drawPath(neckPath, paint);
+    final nW = hR * 0.42;
+    final nTop = hCy + hR * 0.82;
+    final nBot = nTop + s.height * 0.048;
+    canvas.drawRect(Rect.fromLTRB(cx - nW, nTop, cx + nW, nBot), p);
 
-    // ── Torso with waist curve ───────────────────────────────────────────────
-    final shW = isFemale ? s.width * 0.50 : s.width * 0.60;
-    final hipW = isFemale ? s.width * 0.54 : s.width * 0.45;
-    final waistW = isFemale ? s.width * 0.34 : s.width * 0.42;
-    final tTop = neckBot;
-    final tBot = s.height * 0.57;
-    final waistY = tTop + (tBot - tTop) * 0.52;
+    // ── Proportions ──────────────────────────────────────────────────────────
+    final shW = isFemale ? s.width * 0.37 : s.width * 0.44;
+    final wW  = isFemale ? s.width * 0.21 : s.width * 0.28;
+    final hW  = isFemale ? s.width * 0.39 : s.width * 0.33;
+    final shY = nBot;
+    final wY  = shY + s.height * 0.195;
+    final hY  = wY  + s.height * 0.115;
+    final cY  = hY  + s.height * 0.06;
+    final lGap = s.width * 0.038;
+    final lW   = hW * 0.385;
 
-    final torso = Path()
-      ..moveTo(cx - shW / 2, tTop)
-      ..lineTo(cx + shW / 2, tTop)
+    // ── Arms — oval shapes hanging naturally at sides ─────────────────────────
+    final aHW = s.width * 0.066;
+    final aTop = shY + s.height * 0.02;
+    final aBot = wY + s.height * 0.048;
+    for (final side in [-1.0, 1.0]) {
+      final ax = cx + side * (shW + aHW * 0.68);
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(ax, (aTop + aBot) / 2),
+          width: aHW * 2,
+          height: aBot - aTop,
+        ),
+        p,
+      );
+    }
+
+    // ── Torso + Legs (single smooth bezier path) ──────────────────────────────
+    final body = Path()
+      ..moveTo(cx - nW, shY)
+      // Left neck → shoulder
       ..quadraticBezierTo(
-          cx + waistW / 2 + s.width * 0.06, waistY, cx + hipW / 2, tBot)
-      ..lineTo(cx - hipW / 2, tBot)
+          cx - shW * 0.44, shY - s.height * 0.004, cx - shW, shY + s.height * 0.025)
+      // Left shoulder → waist (cubic hourglass)
+      ..cubicTo(
+        cx - shW,        shY + (wY - shY) * 0.42,
+        cx - wW * 1.08,  wY  - (wY - shY) * 0.12,
+        cx - wW,         wY,
+      )
+      // Left waist → hip
+      ..cubicTo(
+        cx - wW * 0.95, wY  + (hY - wY) * 0.52,
+        cx - hW,        hY  - (hY - wY) * 0.18,
+        cx - hW,        hY,
+      )
+      // Left hip → left leg outer
+      ..lineTo(cx - lGap - lW,        cY)
+      ..lineTo(cx - lGap - lW * 0.88, s.height)
+      ..lineTo(cx - lGap,             s.height)
+      // Crotch arch
+      ..cubicTo(
+        cx - lGap * 0.5, cY + (s.height - cY) * 0.14,
+        cx + lGap * 0.5, cY + (s.height - cY) * 0.14,
+        cx + lGap,       s.height,
+      )
+      ..lineTo(cx + lGap + lW * 0.88, s.height)
+      ..lineTo(cx + lGap + lW,        cY)
+      ..lineTo(cx + hW,               hY)
+      // Right hip → waist
+      ..cubicTo(
+        cx + hW,        hY  - (hY - wY) * 0.18,
+        cx + wW * 0.95, wY  + (hY - wY) * 0.52,
+        cx + wW,        wY,
+      )
+      // Right waist → shoulder
+      ..cubicTo(
+        cx + wW * 1.08, wY  - (wY - shY) * 0.12,
+        cx + shW,       shY + (wY - shY) * 0.42,
+        cx + shW,       shY + s.height * 0.025,
+      )
+      // Right shoulder → neck
       ..quadraticBezierTo(
-          cx - waistW / 2 - s.width * 0.06, waistY, cx - shW / 2, tTop)
+          cx + shW * 0.44, shY - s.height * 0.004, cx + nW, shY)
       ..close();
-    canvas.drawPath(torso, paint);
 
-    // ── Arms ─────────────────────────────────────────────────────────────────
-    final aW = s.width * 0.095;
-    final aLen = (tBot - tTop) * 0.88;
-    for (final side in [-1.0, 1.0]) {
-      final ax = cx + side * shW / 2;
-      final arm = Path()
-        ..moveTo(ax, tTop)
-        ..lineTo(ax + side * aW * 1.6, tTop + aLen * 0.18)
-        ..lineTo(ax + side * aW * 1.2, tTop + aLen)
-        ..lineTo(ax + side * aW * 0.1, tTop + aLen)
-        ..lineTo(ax - side * aW * 0.4, tTop + aLen * 0.18)
-        ..close();
-      canvas.drawPath(arm, paint);
-    }
-
-    // ── Legs ─────────────────────────────────────────────────────────────────
-    final lW = s.width * 0.21;
-    final gap = s.width * 0.025;
-    for (final side in [-1.0, 1.0]) {
-      final lx = cx + side * gap;
-      final leg = Path()
-        ..moveTo(lx, tBot)
-        ..lineTo(lx + side * lW, tBot)
-        ..quadraticBezierTo(
-            lx + side * lW * 0.9, s.height * 0.78, lx + side * lW * 0.82, s.height)
-        ..lineTo(lx + side * lW * 0.08, s.height)
-        ..close();
-      canvas.drawPath(leg, paint);
-    }
+    canvas.drawPath(body, p);
   }
 
   @override
