@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
 import '../../widgets/pep_logo.dart';
+import 'otp_sheet.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -33,19 +34,24 @@ class _LoginScreenState extends State<LoginScreen> {
       await signIn(_emailController.text.trim(), _passwordController.text);
     } on AuthException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: kError),
-        );
+        final msg = e.message.toLowerCase();
+        if (msg.contains('email not confirmed') ||
+            msg.contains('not confirmed')) {
+          showOtpSheet(context, _emailController.text.trim());
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.message), backgroundColor: kError),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Error: $e'), backgroundColor: kError),
+          SnackBar(content: Text('Error: $e'), backgroundColor: kError),
         );
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) { setState(() => _loading = false); }
     }
   }
 
@@ -100,8 +106,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         icon: Icon(_obscurePassword
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined),
-                        onPressed: () =>
-                            setState(() => _obscurePassword = !_obscurePassword),
+                        onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword),
                       ),
                     ),
                     validator: (v) {
@@ -111,7 +117,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 28),
-                  // Login button
                   SizedBox(
                     height: 52,
                     child: ElevatedButton(
@@ -127,7 +132,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  // Register link
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

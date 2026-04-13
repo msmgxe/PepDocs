@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
 import '../../widgets/pep_logo.dart';
+import 'otp_sheet.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -32,16 +33,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
-      await signUp(
-          _emailController.text.trim(), _passwordController.text);
+      final email = _emailController.text.trim();
+      await signUp(email, _passwordController.text);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cuenta creada. Revisa tu correo para confirmarla.'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        // Go back to login then immediately show OTP sheet
         Navigator.pop(context);
+        showOtpSheet(context, email);
       }
     } on AuthException catch (e) {
       if (mounted) {
