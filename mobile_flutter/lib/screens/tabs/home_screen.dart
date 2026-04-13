@@ -50,10 +50,11 @@ class _HomeScreenState extends State<HomeScreen> {
           _latestMeasurement =
               measurements.isNotEmpty ? measurements.first : null;
           _nextEvent = nextEvent;
-          _loading = false;
         });
       }
     } catch (e) {
+      // ignore load errors — spinner will stop in finally
+    } finally {
       if (mounted) setState(() => _loading = false);
     }
   }

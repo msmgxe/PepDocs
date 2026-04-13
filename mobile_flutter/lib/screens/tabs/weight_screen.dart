@@ -34,10 +34,11 @@ class _WeightScreenState extends State<WeightScreen> {
         setState(() {
           _profile = profile;
           _measurements = measurements;
-          _loading = false;
         });
       }
     } catch (e) {
+      // ignore load errors — spinner will stop in finally
+    } finally {
       if (mounted) setState(() => _loading = false);
     }
   }

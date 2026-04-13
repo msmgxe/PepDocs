@@ -35,27 +35,30 @@ class _MainShellState extends State<MainShell> {
   }
 
   Future<void> _checkOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    final done = prefs.getBool('onboarding_done') ?? false;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final done = prefs.getBool('onboarding_done') ?? false;
 
-    if (!done) {
-      // Double check by querying profile
-      final profile = await getProfile();
-      if (profile == null || (profile['name'] == null || profile['name'].toString().isEmpty)) {
-        if (mounted) {
-          setState(() {
-            _needsOnboarding = true;
-            _checkingOnboarding = false;
-          });
+      if (!done) {
+        final profile = await getProfile();
+        if (profile == null ||
+            profile['full_name'] == null ||
+            profile['full_name'].toString().isEmpty) {
+          if (mounted) {
+            setState(() {
+              _needsOnboarding = true;
+              _checkingOnboarding = false;
+            });
+          }
+          return;
         }
-        return;
+        await prefs.setBool('onboarding_done', true);
       }
-      await prefs.setBool('onboarding_done', true);
-    } else {
-      await getProfile();
+    } catch (e) {
+      // ignore — will fall through to show home
+    } finally {
+      if (mounted) setState(() => _checkingOnboarding = false);
     }
-
-    if (mounted) setState(() => _checkingOnboarding = false);
   }
 
   @override

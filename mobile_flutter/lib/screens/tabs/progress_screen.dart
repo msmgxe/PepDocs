@@ -35,10 +35,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
         setState(() {
           _profile = profile;
           _measurements = measurements.reversed.toList(); // ascending for chart
-          _loading = false;
         });
       }
     } catch (e) {
+      // ignore load errors — spinner will stop in finally
+    } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
