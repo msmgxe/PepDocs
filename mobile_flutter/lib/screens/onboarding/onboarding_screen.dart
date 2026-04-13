@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
 import '../../widgets/main_shell.dart';
@@ -47,7 +46,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
-      await upsertProfile({
+      final profile = await upsertProfile({
         'full_name': _nameController.text.trim(),
         'current_weight_kg': double.tryParse(_weightController.text) ?? 0,
         'goal_weight_kg': double.tryParse(_targetWeightController.text) ?? 0,
@@ -58,8 +57,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           'birth_date': _selectedBirthDate!.toIso8601String().substring(0, 10),
       });
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('onboarding_done', true);
+      // Auto-create initial measurement so the chart has data from day one
+      final initialWeight = double.tryParse(_weightController.text);
+      if (initialWeight != null && initialWeight > 0) {
+        await addMeasurement({
+          'patient_id': profile['id'].toString(),
+          'weight_kg': initialWeight,
+          'measurement_date': DateTime.now().toIso8601String().substring(0, 10),
+        });
+      }
 
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(

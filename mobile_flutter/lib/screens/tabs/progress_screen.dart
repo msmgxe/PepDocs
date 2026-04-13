@@ -211,13 +211,31 @@ class _ProgressScreenState extends State<ProgressScreen> {
                               ? SizedBox(
                                   height: 200,
                                   child: Center(
-                                    child: Text(
-                                      filtered.isEmpty &&
-                                              _period != _Period.all
-                                          ? 'Sin registros en este período'
-                                          : 'Sin registros suficientes',
-                                      style:
-                                          TextStyle(color: Colors.grey[500]),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.show_chart,
+                                            size: 40,
+                                            color: Colors.grey[300]),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          filtered.isEmpty &&
+                                                  _period != _Period.all
+                                              ? 'Sin registros en este período'
+                                              : 'Aún no hay registros',
+                                          style: TextStyle(
+                                              color: Colors.grey[500],
+                                              fontSize: 14),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Ve a la pestaña Peso y toca +',
+                                          style: TextStyle(
+                                              color: Colors.grey[400],
+                                              fontSize: 12),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 )
@@ -456,6 +474,94 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 }
 
+// ─── Human figure painter ─────────────────────────────────────────────────────
+
+class _HumanPainter extends CustomPainter {
+  final bool isFemale;
+  final Color color;
+  const _HumanPainter({required this.isFemale, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size s) {
+    final paint = Paint()..color = color..style = PaintingStyle.fill;
+    final cx = s.width / 2;
+
+    // ── Head (oval) ─────────────────────────────────────────────────────────
+    final headRx = s.width * 0.145;
+    final headRy = s.width * 0.165;
+    final headCy = headRy + s.height * 0.01;
+    canvas.drawOval(
+      Rect.fromCenter(
+          center: Offset(cx, headCy), width: headRx * 2, height: headRy * 2),
+      paint,
+    );
+
+    // ── Neck ─────────────────────────────────────────────────────────────────
+    final neckW = s.width * 0.082;
+    final neckTop = headCy + headRy * 0.82;
+    final neckBot = neckTop + s.height * 0.055;
+    final neckPath = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        Rect.fromLTRB(cx - neckW / 2, neckTop, cx + neckW / 2, neckBot),
+        const Radius.circular(3),
+      ));
+    canvas.drawPath(neckPath, paint);
+
+    // ── Torso with waist curve ───────────────────────────────────────────────
+    final shW = isFemale ? s.width * 0.50 : s.width * 0.60;
+    final hipW = isFemale ? s.width * 0.54 : s.width * 0.45;
+    final waistW = isFemale ? s.width * 0.34 : s.width * 0.42;
+    final tTop = neckBot;
+    final tBot = s.height * 0.57;
+    final waistY = tTop + (tBot - tTop) * 0.52;
+
+    final torso = Path()
+      ..moveTo(cx - shW / 2, tTop)
+      ..lineTo(cx + shW / 2, tTop)
+      ..quadraticBezierTo(
+          cx + waistW / 2 + s.width * 0.06, waistY, cx + hipW / 2, tBot)
+      ..lineTo(cx - hipW / 2, tBot)
+      ..quadraticBezierTo(
+          cx - waistW / 2 - s.width * 0.06, waistY, cx - shW / 2, tTop)
+      ..close();
+    canvas.drawPath(torso, paint);
+
+    // ── Arms ─────────────────────────────────────────────────────────────────
+    final aW = s.width * 0.095;
+    final aLen = (tBot - tTop) * 0.88;
+    for (final side in [-1.0, 1.0]) {
+      final ax = cx + side * shW / 2;
+      final arm = Path()
+        ..moveTo(ax, tTop)
+        ..lineTo(ax + side * aW * 1.6, tTop + aLen * 0.18)
+        ..lineTo(ax + side * aW * 1.2, tTop + aLen)
+        ..lineTo(ax + side * aW * 0.1, tTop + aLen)
+        ..lineTo(ax - side * aW * 0.4, tTop + aLen * 0.18)
+        ..close();
+      canvas.drawPath(arm, paint);
+    }
+
+    // ── Legs ─────────────────────────────────────────────────────────────────
+    final lW = s.width * 0.21;
+    final gap = s.width * 0.025;
+    for (final side in [-1.0, 1.0]) {
+      final lx = cx + side * gap;
+      final leg = Path()
+        ..moveTo(lx, tBot)
+        ..lineTo(lx + side * lW, tBot)
+        ..quadraticBezierTo(
+            lx + side * lW * 0.9, s.height * 0.78, lx + side * lW * 0.82, s.height)
+        ..lineTo(lx + side * lW * 0.08, s.height)
+        ..close();
+      canvas.drawPath(leg, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_HumanPainter old) =>
+      old.isFemale != isFemale || old.color != color;
+}
+
 // ─── Body figure card ─────────────────────────────────────────────────────────
 
 class _BodyCard extends StatelessWidget {
@@ -480,20 +586,26 @@ class _BodyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isFemale = sex == 'femenino';
+    final figureColor = kPrimary.withValues(alpha: 0.78);
+
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Silhouette figure
+            // ── Silhouette ──────────────────────────────────────────────────
             Column(
               children: [
-                Icon(
-                  isFemale ? Icons.woman : Icons.man,
-                  size: 96,
-                  color: kPrimary.withValues(alpha: 0.80),
+                SizedBox(
+                  width: 82,
+                  height: 148,
+                  child: CustomPaint(
+                    painter: _HumanPainter(
+                        isFemale: isFemale, color: figureColor),
+                  ),
                 ),
+                const SizedBox(height: 4),
                 if (sex != null)
                   Text(
                     isFemale ? 'Femenino' : 'Masculino',
@@ -502,7 +614,7 @@ class _BodyCard extends StatelessWidget {
               ],
             ),
             const SizedBox(width: 20),
-            // Stats column
+            // ── Stats ───────────────────────────────────────────────────────
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -524,8 +636,7 @@ class _BodyCard extends StatelessWidget {
                     _StatRow(
                       icon: Icons.calculate_outlined,
                       label: 'IMC',
-                      value:
-                          '${bmi!.toStringAsFixed(1)} · ${bmiCategory ?? ''}',
+                      value: '${bmi!.toStringAsFixed(1)} · ${bmiCategory ?? ''}',
                       color: bmiColor ?? Colors.grey,
                     ),
                   if (totalLost != null && totalLost!.abs() > 0.1)

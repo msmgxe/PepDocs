@@ -45,7 +45,6 @@ class _WeightScreenState extends State<WeightScreen> {
 
   // Unit conversion helpers
   double _toDisplay(double kg) => _useLbs ? kg * 2.20462 : kg;
-  double _toKg(double display) => _useLbs ? display / 2.20462 : display;
   String get _unit => _useLbs ? 'lbs' : 'kg';
 
   // BMI helpers
@@ -75,8 +74,14 @@ class _WeightScreenState extends State<WeightScreen> {
 
   void _showMeasurementDialog(Map<String, dynamic>? existing) {
     final existingKg = (existing?['weight_kg'] as num?)?.toDouble();
+    bool dialogUseLbs = _useLbs;
+
+    double toDisplay(double kg) => dialogUseLbs ? kg * 2.20462 : kg;
+    double toKg(double display) => dialogUseLbs ? display / 2.20462 : display;
+    String unit() => dialogUseLbs ? 'lbs' : 'kg';
+
     final weightController = TextEditingController(
-      text: existingKg != null ? _toDisplay(existingKg).toStringAsFixed(1) : '',
+      text: existingKg != null ? toDisplay(existingKg).toStringAsFixed(1) : '',
     );
     final notesController =
         TextEditingController(text: existing?['notes']?.toString() ?? '');
@@ -125,7 +130,51 @@ class _WeightScreenState extends State<WeightScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 4),
+
+                // kg / lbs toggle inside dialog
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('kg',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: !dialogUseLbs
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          color: !dialogUseLbs ? kPrimary : Colors.grey,
+                        )),
+                    Switch(
+                      value: dialogUseLbs,
+                      onChanged: (v) {
+                        final current =
+                            double.tryParse(weightController.text);
+                        setDialogState(() {
+                          dialogUseLbs = v;
+                          if (current != null) {
+                            // v=true → switching to lbs: multiply by 2.20462
+                            // v=false → switching to kg: divide by 2.20462
+                            weightController.text = (v
+                                    ? current * 2.20462
+                                    : current / 2.20462)
+                                .toStringAsFixed(1);
+                          }
+                        });
+                      },
+                      activeThumbColor: kPrimary,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    Text('lbs',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: dialogUseLbs
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                          color: dialogUseLbs ? kPrimary : Colors.grey,
+                        )),
+                  ],
+                ),
+                const SizedBox(height: 8),
 
                 // Date picker
                 InkWell(
@@ -154,7 +203,7 @@ class _WeightScreenState extends State<WeightScreen> {
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(
-                    labelText: 'Peso ($_unit)',
+                    labelText: 'Peso (${unit()})',
                     prefixIcon: const Icon(Icons.monitor_weight_outlined),
                   ),
                   validator: (v) {
@@ -244,7 +293,7 @@ class _WeightScreenState extends State<WeightScreen> {
                     Navigator.pop(ctx);
                     await _saveMeasurement(
                       existing: existing,
-                      weightKg: _toKg(displayVal),
+                      weightKg: toKg(displayVal),
                       date: selectedDate,
                       notes: notesController.text.trim(),
                       imageFile: selectedImage,
