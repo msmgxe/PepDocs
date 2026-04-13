@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 210">
+  <!-- Head -->
+  <circle cx="50" cy="13" r="12.5"/>
+  <!-- Neck -->
+  <path d="M 46 25.5 L 54 25.5 L 55.5 36 L 44.5 36 Z"/>
+  <!-- Left arm (oval, hangs naturally) -->
+  <ellipse cx="22" cy="65" rx="5.5" ry="25"/>
+  <!-- Right arm -->
+  <ellipse cx="78" cy="65" rx="5.5" ry="25"/>
+  <!-- Torso + legs (hourglass shape) -->
+  <path d="
+    M 44.5 36
+    C 34 36 26 39 24 47
+    C 22 57 25 69 30 79
+    C 32 85 31 91 28 96
+    C 25 102 23 107 23 114
+    L 20 210
+    L 36 210
+    C 36 158 37 130 41 118
+    Q 45 111 50 113
+    Q 55 111 59 118
+    C 63 130 64 158 64 210
+    L 80 210
+    L 77 114
+    C 77 107 75 102 72 96
+    C 69 91 68 85 70 79
+    C 75 69 78 57 76 47
+    C 74 39 66 36 55.5 36
+    Z
+  "/>
+</svg>

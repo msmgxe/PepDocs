@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 210">
+  <!-- Head -->
+  <circle cx="50" cy="13" r="12.5"/>
+  <!-- Neck -->
+  <path d="M 45 25.5 L 55 25.5 L 57 36 L 43 36 Z"/>
+  <!-- Left arm (wider, male) -->
+  <ellipse cx="16" cy="67" rx="6.5" ry="28"/>
+  <!-- Right arm -->
+  <ellipse cx="84" cy="67" rx="6.5" ry="28"/>
+  <!-- Torso + legs (broader shoulders, rectangular torso) -->
+  <path d="
+    M 43 36
+    C 29 36 18 40 17 50
+    C 16 61 20 73 26 83
+    C 28 88 27 93 25 98
+    C 23 104 21 109 21 116
+    L 19 210
+    L 35 210
+    C 35 158 36 130 40 118
+    Q 44 111 50 113
+    Q 56 111 60 118
+    C 64 130 65 158 65 210
+    L 81 210
+    L 79 116
+    C 79 109 77 104 75 98
+    C 73 93 72 88 74 83
+    C 80 73 84 61 83 50
+    C 82 40 71 36 57 36
+    Z
+  "/>
+</svg>

@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
@@ -484,112 +485,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 }
 
-// ─── Human figure painter ─────────────────────────────────────────────────────
-
-class _HumanPainter extends CustomPainter {
-  final bool isFemale;
-  final Color color;
-  const _HumanPainter({required this.isFemale, required this.color});
-
-  @override
-  void paint(Canvas canvas, Size s) {
-    final p = Paint()..color = color..style = PaintingStyle.fill;
-    final cx = s.width / 2;
-
-    // ── Head (circle) ────────────────────────────────────────────────────────
-    final hR = s.width * 0.135;
-    final hCy = hR + s.height * 0.015;
-    canvas.drawCircle(Offset(cx, hCy), hR, p);
-
-    // ── Neck ─────────────────────────────────────────────────────────────────
-    final nW = hR * 0.42;
-    final nTop = hCy + hR * 0.82;
-    final nBot = nTop + s.height * 0.048;
-    canvas.drawRect(Rect.fromLTRB(cx - nW, nTop, cx + nW, nBot), p);
-
-    // ── Proportions ──────────────────────────────────────────────────────────
-    final shW = isFemale ? s.width * 0.37 : s.width * 0.44;
-    final wW  = isFemale ? s.width * 0.21 : s.width * 0.28;
-    final hW  = isFemale ? s.width * 0.39 : s.width * 0.33;
-    final shY = nBot;
-    final wY  = shY + s.height * 0.195;
-    final hY  = wY  + s.height * 0.115;
-    final cY  = hY  + s.height * 0.06;
-    final lGap = s.width * 0.038;
-    final lW   = hW * 0.385;
-
-    // ── Arms — oval shapes hanging naturally at sides ─────────────────────────
-    final aHW = s.width * 0.066;
-    final aTop = shY + s.height * 0.02;
-    final aBot = wY + s.height * 0.048;
-    for (final side in [-1.0, 1.0]) {
-      final ax = cx + side * (shW + aHW * 0.68);
-      canvas.drawOval(
-        Rect.fromCenter(
-          center: Offset(ax, (aTop + aBot) / 2),
-          width: aHW * 2,
-          height: aBot - aTop,
-        ),
-        p,
-      );
-    }
-
-    // ── Torso + Legs (single smooth bezier path) ──────────────────────────────
-    final body = Path()
-      ..moveTo(cx - nW, shY)
-      // Left neck → shoulder
-      ..quadraticBezierTo(
-          cx - shW * 0.44, shY - s.height * 0.004, cx - shW, shY + s.height * 0.025)
-      // Left shoulder → waist (cubic hourglass)
-      ..cubicTo(
-        cx - shW,        shY + (wY - shY) * 0.42,
-        cx - wW * 1.08,  wY  - (wY - shY) * 0.12,
-        cx - wW,         wY,
-      )
-      // Left waist → hip
-      ..cubicTo(
-        cx - wW * 0.95, wY  + (hY - wY) * 0.52,
-        cx - hW,        hY  - (hY - wY) * 0.18,
-        cx - hW,        hY,
-      )
-      // Left hip → left leg outer
-      ..lineTo(cx - lGap - lW,        cY)
-      ..lineTo(cx - lGap - lW * 0.88, s.height)
-      ..lineTo(cx - lGap,             s.height)
-      // Crotch arch
-      ..cubicTo(
-        cx - lGap * 0.5, cY + (s.height - cY) * 0.14,
-        cx + lGap * 0.5, cY + (s.height - cY) * 0.14,
-        cx + lGap,       s.height,
-      )
-      ..lineTo(cx + lGap + lW * 0.88, s.height)
-      ..lineTo(cx + lGap + lW,        cY)
-      ..lineTo(cx + hW,               hY)
-      // Right hip → waist
-      ..cubicTo(
-        cx + hW,        hY  - (hY - wY) * 0.18,
-        cx + wW * 0.95, wY  + (hY - wY) * 0.52,
-        cx + wW,        wY,
-      )
-      // Right waist → shoulder
-      ..cubicTo(
-        cx + wW * 1.08, wY  - (wY - shY) * 0.12,
-        cx + shW,       shY + (wY - shY) * 0.42,
-        cx + shW,       shY + s.height * 0.025,
-      )
-      // Right shoulder → neck
-      ..quadraticBezierTo(
-          cx + shW * 0.44, shY - s.height * 0.004, cx + nW, shY)
-      ..close();
-
-    canvas.drawPath(body, p);
-  }
-
-  @override
-  bool shouldRepaint(_HumanPainter old) =>
-      old.isFemale != isFemale || old.color != color;
-}
-
 // ─── Body figure card ─────────────────────────────────────────────────────────
 
 class _BodyCard extends StatelessWidget {
@@ -614,7 +509,6 @@ class _BodyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isFemale = sex == 'femenino';
-    final figureColor = kPrimary.withValues(alpha: 0.78);
 
     return Card(
       child: Padding(
@@ -622,16 +516,18 @@ class _BodyCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ── Silhouette ──────────────────────────────────────────────────
+            // ── Silhouette SVG ───────────────────────────────────────────────
             Column(
               children: [
-                SizedBox(
+                SvgPicture.asset(
+                  isFemale
+                      ? 'assets/images/silhouette_female.svg'
+                      : 'assets/images/silhouette_male.svg',
                   width: 82,
                   height: 148,
-                  child: CustomPaint(
-                    painter: _HumanPainter(
-                        isFemale: isFemale, color: figureColor),
-                  ),
+                  colorFilter: ColorFilter.mode(
+                      kPrimary.withValues(alpha: 0.80), BlendMode.srcIn),
+                  fit: BoxFit.contain,
                 ),
                 const SizedBox(height: 4),
                 if (sex != null)
