@@ -87,9 +87,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final filtered = _filtered;
     final spots = _buildSpots(filtered);
     final targetWeight = (_profile?['target_weight_kg'] as num?)?.toDouble();
+    final profileWeight = (_profile?['weight_kg'] as num?)?.toDouble();
     final currentWeight = _measurements.isNotEmpty
         ? (_measurements.last['weight_kg'] as num?)?.toDouble()
-        : null;
+        : profileWeight;
     final firstWeight = _measurements.isNotEmpty
         ? (_measurements.first['weight_kg'] as num?)?.toDouble()
         : null;

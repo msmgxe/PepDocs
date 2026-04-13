@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../services/supabase_service.dart';
 import '../screens/onboarding/onboarding_screen.dart';
 import '../screens/tabs/home_screen.dart';
@@ -35,35 +34,22 @@ class _MainShellState extends State<MainShell> {
   }
 
   Future<void> _checkOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    final done = prefs.getBool('onboarding_done') ?? false;
-
-    if (done) {
-      if (mounted) setState(() => _checkingOnboarding = false);
-      return;
-    }
-
-    // Not done yet — check if profile is complete
+    // Always query the DB — SharedPreferences can be stale between installs
     Map<String, dynamic>? profile;
     try {
       profile = await getProfile();
     } catch (_) {
-      profile = null; // any error → treat as needs onboarding
+      profile = null;
     }
 
     final needsOnboarding = profile == null ||
-        profile['full_name'] == null ||
-        profile['full_name'].toString().isEmpty;
+        (profile['full_name'] as String? ?? '').trim().isEmpty;
 
     if (mounted) {
       setState(() {
         _needsOnboarding = needsOnboarding;
         _checkingOnboarding = false;
       });
-    }
-
-    if (!needsOnboarding) {
-      await prefs.setBool('onboarding_done', true);
     }
   }
 
