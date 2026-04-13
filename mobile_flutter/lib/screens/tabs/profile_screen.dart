@@ -42,8 +42,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() {
           _nameController.text = p['full_name']?.toString() ?? '';
           _heightController.text = p['height_cm']?.toString() ?? '';
-          _weightController.text = p['weight_kg']?.toString() ?? '';
-          _targetController.text = p['target_weight_kg']?.toString() ?? '';
+          _weightController.text = p['current_weight_kg']?.toString() ?? '';
+          _targetController.text = p['goal_weight_kg']?.toString() ?? '';
           _selectedSex = p['sex']?.toString();
           final bs = p['birth_date']?.toString();
           if (bs != null && bs.length >= 10) {
@@ -77,8 +77,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await upsertProfile({
         'full_name': _nameController.text.trim(),
         'height_cm': double.tryParse(_heightController.text) ?? 0,
-        'weight_kg': double.tryParse(_weightController.text) ?? 0,
-        'target_weight_kg': double.tryParse(_targetController.text) ?? 0,
+        'current_weight_kg': double.tryParse(_weightController.text) ?? 0,
+        'goal_weight_kg': double.tryParse(_targetController.text) ?? 0,
         if (_selectedSex != null) 'sex': _selectedSex,
         if (_birthDate != null)
           'birth_date': _birthDate!.toIso8601String().substring(0, 10),

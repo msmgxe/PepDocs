@@ -49,8 +49,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     try {
       await upsertProfile({
         'full_name': _nameController.text.trim(),
-        'weight_kg': double.tryParse(_weightController.text) ?? 0,
-        'target_weight_kg': double.tryParse(_targetWeightController.text) ?? 0,
+        'current_weight_kg': double.tryParse(_weightController.text) ?? 0,
+        'goal_weight_kg': double.tryParse(_targetWeightController.text) ?? 0,
         'height_cm': double.tryParse(_heightController.text) ?? 0,
         'role': 'patient',
         if (_selectedSex != null) 'sex': _selectedSex,

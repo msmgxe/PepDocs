@@ -64,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_profile == null) return null;
     final height = (_profile!['height_cm'] as num?)?.toDouble();
     final weight = (_latestMeasurement?['weight_kg'] as num?)?.toDouble() ??
-        (_profile!['weight_kg'] as num?)?.toDouble();
+        (_profile!['current_weight_kg'] as num?)?.toDouble();
     if (height == null || height == 0 || weight == null) return null;
     final h = height / 100;
     return weight / (h * h);
@@ -103,8 +103,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final name = _profile?['full_name']?.toString() ?? 'Paciente';
     final bmi = _bmi();
     final currentWeight = (_latestMeasurement?['weight_kg'] as num?)?.toDouble() ??
-        (_profile?['weight_kg'] as num?)?.toDouble();
-    final targetWeight = (_profile?['target_weight_kg'] as num?)?.toDouble();
+        (_profile?['current_weight_kg'] as num?)?.toDouble();
+    final targetWeight = (_profile?['goal_weight_kg'] as num?)?.toDouble();
     final height = (_profile?['height_cm'] as num?)?.toDouble();
     final sex = _profile?['sex']?.toString();
     final age = _age();

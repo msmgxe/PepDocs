@@ -86,8 +86,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
   Widget build(BuildContext context) {
     final filtered = _filtered;
     final spots = _buildSpots(filtered);
-    final targetWeight = (_profile?['target_weight_kg'] as num?)?.toDouble();
-    final profileWeight = (_profile?['weight_kg'] as num?)?.toDouble();
+    final targetWeight = (_profile?['goal_weight_kg'] as num?)?.toDouble();
+    final profileWeight = (_profile?['current_weight_kg'] as num?)?.toDouble();
     final currentWeight = _measurements.isNotEmpty
         ? (_measurements.last['weight_kg'] as num?)?.toDouble()
         : profileWeight;
