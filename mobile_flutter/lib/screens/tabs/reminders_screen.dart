@@ -37,10 +37,11 @@ class _RemindersScreenState extends State<RemindersScreen> {
         setState(() {
           _profile = profile;
           _events = events;
-          _loading = false;
         });
       }
     } catch (e) {
+      // ignore load errors — spinner will stop in finally
+    } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
