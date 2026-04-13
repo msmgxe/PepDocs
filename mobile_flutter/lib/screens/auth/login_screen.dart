@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
+import '../../widgets/pep_logo.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -62,20 +63,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 40),
-                  // Logo / brand
-                  Icon(Icons.health_and_safety_rounded,
-                      size: 80, color: kPrimary),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Pep Education',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: kPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
+                  const PepLogo(size: 88),
+                  const SizedBox(height: 12),
                   Text(
                     'Tu app de salud y nutrición',
                     textAlign: TextAlign.center,

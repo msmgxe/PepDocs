@@ -31,7 +31,6 @@ class _HomeScreenState extends State<HomeScreen> {
       final measurements = await getMeasurements(profile['id'].toString());
       final events = await getCalendarEvents(profile['id'].toString());
 
-      // Find next upcoming event
       final now = DateTime.now();
       Map<String, dynamic>? nextEvent;
       for (final e in events) {
@@ -83,13 +82,30 @@ class _HomeScreenState extends State<HomeScreen> {
     return Colors.red;
   }
 
+  int? _age() {
+    final birthStr = _profile?['birth_date']?.toString();
+    if (birthStr == null) return null;
+    final birth = DateTime.tryParse(birthStr.substring(0, 10));
+    if (birth == null) return null;
+    final now = DateTime.now();
+    var age = now.year - birth.year;
+    if (now.month < birth.month ||
+        (now.month == birth.month && now.day < birth.day)) {
+      age--;
+    }
+    return age;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final name = _profile?['name']?.toString() ?? 'Paciente';
+    final name = _profile?['full_name']?.toString() ?? 'Paciente';
     final bmi = _bmi();
     final currentWeight = (_latestMeasurement?['weight_kg'] as num?)?.toDouble() ??
         (_profile?['weight_kg'] as num?)?.toDouble();
     final targetWeight = (_profile?['target_weight_kg'] as num?)?.toDouble();
+    final height = (_profile?['height_cm'] as num?)?.toDouble();
+    final sex = _profile?['sex']?.toString();
+    final age = _age();
 
     return Scaffold(
       appBar: AppBar(
@@ -125,7 +141,45 @@ class _HomeScreenState extends State<HomeScreen> {
                         fontWeight: FontWeight.bold,
                         color: kPrimary),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
+
+                  // Personal info row: height, sex, age
+                  if (height != null || sex != null || age != null)
+                    Row(
+                      children: [
+                        if (height != null)
+                          Expanded(
+                            child: _InfoChip(
+                              icon: Icons.height,
+                              label: 'Estatura',
+                              value: '${height.toStringAsFixed(0)} cm',
+                            ),
+                          ),
+                        if (height != null && (sex != null || age != null))
+                          const SizedBox(width: 8),
+                        if (sex != null)
+                          Expanded(
+                            child: _InfoChip(
+                              icon: sex == 'female' ? Icons.woman : Icons.man,
+                              label: 'Sexo',
+                              value: sex == 'female' ? 'Femenino' : 'Masculino',
+                            ),
+                          ),
+                        if (sex != null && age != null)
+                          const SizedBox(width: 8),
+                        if (age != null)
+                          Expanded(
+                            child: _InfoChip(
+                              icon: Icons.cake_outlined,
+                              label: 'Edad',
+                              value: '$age años',
+                            ),
+                          ),
+                      ],
+                    ),
+
+                  if (height != null || sex != null || age != null)
+                    const SizedBox(height: 16),
 
                   // BMI Card
                   if (bmi != null)
@@ -287,6 +341,48 @@ class _HomeScreenState extends State<HomeScreen> {
     final date = DateTime.tryParse(raw.substring(0, 10));
     if (date == null) return raw;
     return DateFormat('EEEE d \'de\' MMMM', 'es').format(date);
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: kPrimary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: kPrimary.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: kPrimary, size: 18),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: const TextStyle(
+                fontSize: 13, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            label,
+            style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
   }
 }
 

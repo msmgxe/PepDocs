@@ -33,8 +33,8 @@
 │                 │   │  Dart / Material 3 / fl_chart               │
 │                 │   │  Sin Metro bundler — compila nativo          │
 │                 │   │  iOS + Android desde un codebase            │
-│  /analisis      │   │                                             │
-│  /whatsapp      │   │  Estado: EAS Build → App Store / Play Store │
+│  /analisis      │   │  Logo PepLogo · IMC por registro            │
+│  /whatsapp      │   │  kg↔lbs · figura humana · filtros gráfica  │
 │  /login         │   └──────────────────┬──────────────────────────┘
 │                 │                      │
 └────────┬────────┘                      │

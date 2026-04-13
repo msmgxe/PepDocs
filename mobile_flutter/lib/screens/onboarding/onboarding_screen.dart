@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
 import '../../widgets/main_shell.dart';
+import '../../widgets/pep_logo.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -17,6 +18,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _weightController = TextEditingController();
   final _targetWeightController = TextEditingController();
   final _heightController = TextEditingController();
+  String? _selectedSex;
+  DateTime? _selectedBirthDate;
   bool _loading = false;
 
   @override
@@ -28,16 +31,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
+  Future<void> _pickBirthDate() async {
+    final now = DateTime.now();
+    final d = await showDatePicker(
+      context: context,
+      initialDate: _selectedBirthDate ?? DateTime(now.year - 30),
+      firstDate: DateTime(now.year - 100),
+      lastDate: DateTime(now.year - 5),
+      helpText: 'Fecha de nacimiento',
+    );
+    if (d != null) setState(() => _selectedBirthDate = d);
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
       await upsertProfile({
-        'name': _nameController.text.trim(),
+        'full_name': _nameController.text.trim(),
         'weight_kg': double.tryParse(_weightController.text) ?? 0,
         'target_weight_kg': double.tryParse(_targetWeightController.text) ?? 0,
         'height_cm': double.tryParse(_heightController.text) ?? 0,
         'role': 'patient',
+        if (_selectedSex != null) 'sex': _selectedSex,
+        if (_selectedBirthDate != null)
+          'birth_date': _selectedBirthDate!.toIso8601String().substring(0, 10),
       });
 
       final prefs = await SharedPreferences.getInstance();
@@ -74,8 +92,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 32),
-                  Icon(Icons.waving_hand_rounded, size: 64, color: kAccent),
-                  const SizedBox(height: 12),
+                  const Center(child: PepLogo(size: 72)),
+                  const SizedBox(height: 20),
                   Text(
                     '¡Bienvenido/a!',
                     textAlign: TextAlign.center,
@@ -90,7 +108,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 15, color: Colors.grey[600]),
                   ),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 32),
+
+                  // Nombre
                   TextFormField(
                     controller: _nameController,
                     textCapitalization: TextCapitalization.words,
@@ -103,6 +123,70 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         (v == null || v.isEmpty) ? 'Ingresa tu nombre' : null,
                   ),
                   const SizedBox(height: 16),
+
+                  // Sexo
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 8),
+                        child: Text(
+                          'Sexo',
+                          style: TextStyle(
+                              fontSize: 13, color: Colors.grey[600]),
+                        ),
+                      ),
+                      SegmentedButton<String>(
+                        segments: const [
+                          ButtonSegment(
+                            value: 'male',
+                            label: Text('Masculino'),
+                            icon: Icon(Icons.man, size: 18),
+                          ),
+                          ButtonSegment(
+                            value: 'female',
+                            label: Text('Femenino'),
+                            icon: Icon(Icons.woman, size: 18),
+                          ),
+                        ],
+                        selected: _selectedSex != null
+                            ? {_selectedSex!}
+                            : <String>{},
+                        emptySelectionAllowed: true,
+                        onSelectionChanged: (s) => setState(
+                            () => _selectedSex = s.isEmpty ? null : s.first),
+                        style: ButtonStyle(
+                          visualDensity: VisualDensity.comfortable,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Fecha de nacimiento
+                  InkWell(
+                    onTap: _pickBirthDate,
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Fecha de nacimiento (opcional)',
+                        prefixIcon: Icon(Icons.cake_outlined),
+                      ),
+                      child: Text(
+                        _selectedBirthDate != null
+                            ? '${_selectedBirthDate!.day}/${_selectedBirthDate!.month}/${_selectedBirthDate!.year}'
+                            : 'Seleccionar fecha',
+                        style: TextStyle(
+                          color: _selectedBirthDate != null
+                              ? Colors.black87
+                              : Colors.grey[500],
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Estatura
                   TextFormField(
                     controller: _heightController,
                     keyboardType:
@@ -119,6 +203,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
+
+                  // Peso actual
                   TextFormField(
                     controller: _weightController,
                     keyboardType:
@@ -135,6 +221,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
+
+                  // Peso objetivo
                   TextFormField(
                     controller: _targetWeightController,
                     keyboardType:
@@ -154,6 +242,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     },
                   ),
                   const SizedBox(height: 32),
+
                   SizedBox(
                     height: 52,
                     child: ElevatedButton(

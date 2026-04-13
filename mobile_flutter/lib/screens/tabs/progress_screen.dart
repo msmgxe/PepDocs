@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
 
+enum _Period { month1, month3, month6, all }
+
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
 
@@ -15,6 +17,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   List<Map<String, dynamic>> _measurements = [];
   Map<String, dynamic>? _profile;
   bool _loading = true;
+  _Period _period = _Period.all;
 
   @override
   void initState() {
@@ -31,8 +34,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
       if (mounted) {
         setState(() {
           _profile = profile;
-          // Sort ascending for chart
-          _measurements = measurements.reversed.toList();
+          _measurements = measurements.reversed.toList(); // ascending for chart
           _loading = false;
         });
       }
@@ -41,25 +43,62 @@ class _ProgressScreenState extends State<ProgressScreen> {
     }
   }
 
-  List<FlSpot> _buildSpots() {
+  List<Map<String, dynamic>> get _filtered {
+    if (_period == _Period.all) return _measurements;
+    final days = {
+      _Period.month1: 30,
+      _Period.month3: 90,
+      _Period.month6: 180,
+    }[_period]!;
+    final cutoff = DateTime.now().subtract(Duration(days: days));
+    return _measurements.where((m) {
+      final dateStr = m['measurement_date']?.toString().substring(0, 10) ?? '';
+      final d = DateTime.tryParse(dateStr);
+      return d != null && !d.isBefore(cutoff);
+    }).toList();
+  }
+
+  List<FlSpot> _buildSpots(List<Map<String, dynamic>> data) {
     final spots = <FlSpot>[];
-    for (var i = 0; i < _measurements.length; i++) {
-      final w = (_measurements[i]['weight_kg'] as num?)?.toDouble();
+    for (var i = 0; i < data.length; i++) {
+      final w = (data[i]['weight_kg'] as num?)?.toDouble();
       if (w != null) spots.add(FlSpot(i.toDouble(), w));
     }
     return spots;
   }
 
+  String _bmiCategory(double bmi) {
+    if (bmi < 18.5) return 'Bajo peso';
+    if (bmi < 25) return 'Normal';
+    if (bmi < 30) return 'Sobrepeso';
+    return 'Obesidad';
+  }
+
+  Color _bmiColor(double bmi) {
+    if (bmi < 18.5) return Colors.blue;
+    if (bmi < 25) return Colors.green;
+    if (bmi < 30) return Colors.orange;
+    return Colors.red;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final spots = _buildSpots();
-    final targetWeight =
-        (_profile?['target_weight_kg'] as num?)?.toDouble();
+    final filtered = _filtered;
+    final spots = _buildSpots(filtered);
+    final targetWeight = (_profile?['target_weight_kg'] as num?)?.toDouble();
     final currentWeight = _measurements.isNotEmpty
         ? (_measurements.last['weight_kg'] as num?)?.toDouble()
         : null;
     final firstWeight = _measurements.isNotEmpty
         ? (_measurements.first['weight_kg'] as num?)?.toDouble()
+        : null;
+    final height = (_profile?['height_cm'] as num?)?.toDouble();
+    final sex = _profile?['sex']?.toString();
+    final bmi = (currentWeight != null && height != null && height > 0)
+        ? currentWeight / ((height / 100) * (height / 100))
+        : null;
+    final totalLost = (currentWeight != null && firstWeight != null)
+        ? firstWeight - currentWeight
         : null;
 
     double? minY;
@@ -81,30 +120,44 @@ class _ProgressScreenState extends State<ProgressScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
-                  // Summary cards
+                  // ── Body figure card ──────────────────────────────
+                  if (currentWeight != null)
+                    _BodyCard(
+                      sex: sex,
+                      currentWeight: currentWeight,
+                      height: height,
+                      bmi: bmi,
+                      bmiCategory: bmi != null ? _bmiCategory(bmi) : null,
+                      bmiColor: bmi != null ? _bmiColor(bmi) : null,
+                      totalLost: totalLost,
+                    ),
+
+                  if (currentWeight != null) const SizedBox(height: 16),
+
+                  // ── Summary mini-cards ────────────────────────────
                   if (currentWeight != null)
                     Row(
                       children: [
                         Expanded(
                           child: _MiniCard(
                             label: 'Peso actual',
-                            value:
-                                '${currentWeight.toStringAsFixed(1)} kg',
+                            value: '${currentWeight.toStringAsFixed(1)} kg',
                             color: kPrimary,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        if (targetWeight != null)
+                        if (targetWeight != null) ...[
+                          const SizedBox(width: 12),
                           Expanded(
                             child: _MiniCard(
                               label: 'Meta',
-                              value:
-                                  '${targetWeight.toStringAsFixed(1)} kg',
+                              value: '${targetWeight.toStringAsFixed(1)} kg',
                               color: Colors.green,
                             ),
                           ),
-                        const SizedBox(width: 12),
-                        if (firstWeight != null && currentWeight != firstWeight)
+                        ],
+                        if (firstWeight != null &&
+                            currentWeight != firstWeight) ...[
+                          const SizedBox(width: 12),
                           Expanded(
                             child: _MiniCard(
                               label: 'Diferencia',
@@ -115,12 +168,31 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                   : Colors.orange,
                             ),
                           ),
+                        ],
                       ],
                     ),
 
                   const SizedBox(height: 24),
 
-                  // Chart
+                  // ── Period filter ─────────────────────────────────
+                  Center(
+                    child: SegmentedButton<_Period>(
+                      segments: const [
+                        ButtonSegment(value: _Period.month1, label: Text('1M')),
+                        ButtonSegment(value: _Period.month3, label: Text('3M')),
+                        ButtonSegment(value: _Period.month6, label: Text('6M')),
+                        ButtonSegment(
+                            value: _Period.all, label: Text('Todo')),
+                      ],
+                      selected: {_period},
+                      onSelectionChanged: (s) =>
+                          setState(() => _period = s.first),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // ── Chart ─────────────────────────────────────────
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
@@ -130,8 +202,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                           const Text(
                             'Evolución del peso',
                             style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold),
+                                fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 24),
                           spots.isEmpty
@@ -139,9 +210,12 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                   height: 200,
                                   child: Center(
                                     child: Text(
-                                      'Sin registros suficientes',
-                                      style: TextStyle(
-                                          color: Colors.grey[500]),
+                                      filtered.isEmpty &&
+                                              _period != _Period.all
+                                          ? 'Sin registros en este período'
+                                          : 'Sin registros suficientes',
+                                      style:
+                                          TextStyle(color: Colors.grey[500]),
                                     ),
                                   ),
                                 )
@@ -161,7 +235,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                           strokeWidth: 1,
                                         ),
                                       ),
-                                      borderData: FlBorderData(show: false),
+                                      borderData:
+                                          FlBorderData(show: false),
                                       titlesData: FlTitlesData(
                                         leftTitles: AxisTitles(
                                           sideTitles: SideTitles(
@@ -183,22 +258,22 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                             getTitlesWidget: (v, meta) {
                                               final idx = v.toInt();
                                               if (idx < 0 ||
-                                                  idx >=
-                                                      _measurements.length) {
-                                                return const SizedBox.shrink();
+                                                  idx >= filtered.length) {
+                                                return const SizedBox
+                                                    .shrink();
                                               }
-                                              // Show only first, last, and every Nth
                                               if (idx != 0 &&
                                                   idx !=
-                                                      _measurements.length - 1 &&
-                                                  _measurements.length > 6 &&
+                                                      filtered.length - 1 &&
+                                                  filtered.length > 6 &&
                                                   idx %
-                                                          (_measurements.length ~/
+                                                          (filtered.length ~/
                                                               4) !=
                                                       0) {
-                                                return const SizedBox.shrink();
+                                                return const SizedBox
+                                                    .shrink();
                                               }
-                                              final dateStr = _measurements[idx][
+                                              final dateStr = filtered[idx][
                                                           'measurement_date']
                                                       ?.toString()
                                                       .substring(0, 10) ??
@@ -206,8 +281,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                               final d =
                                                   DateTime.tryParse(dateStr);
                                               return Padding(
-                                                padding: const EdgeInsets.only(
-                                                    top: 4),
+                                                padding:
+                                                    const EdgeInsets.only(
+                                                        top: 4),
                                                 child: Text(
                                                   d != null
                                                       ? DateFormat('d/M')
@@ -229,8 +305,25 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                             sideTitles: SideTitles(
                                                 showTitles: false)),
                                       ),
+                                      lineTouchData: LineTouchData(
+                                        touchTooltipData:
+                                            LineTouchTooltipData(
+                                          getTooltipItems: (touchedSpots) =>
+                                              touchedSpots
+                                                  .map((s) =>
+                                                      LineTooltipItem(
+                                                        '${s.y.toStringAsFixed(1)} kg',
+                                                        const TextStyle(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 12,
+                                                        ),
+                                                      ))
+                                                  .toList(),
+                                        ),
+                                      ),
                                       lineBarsData: [
-                                        // Main weight line
                                         LineChartBarData(
                                           spots: spots,
                                           isCurved: true,
@@ -248,11 +341,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                           ),
                                           belowBarData: BarAreaData(
                                             show: true,
-                                            color:
-                                                kPrimary.withValues(alpha: 0.08),
+                                            color: kPrimary
+                                                .withValues(alpha: 0.08),
                                           ),
                                         ),
-                                        // Target weight line
                                         if (targetWeight != null)
                                           LineChartBarData(
                                             spots: [
@@ -281,8 +373,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                 Container(
                                     width: 16,
                                     height: 3,
-                                    color:
-                                        Colors.green.withValues(alpha: 0.6)),
+                                    color: Colors.green
+                                        .withValues(alpha: 0.6)),
                                 const SizedBox(width: 6),
                                 Text(
                                   'Meta: ${targetWeight.toStringAsFixed(1)} kg',
@@ -301,8 +393,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
                   const SizedBox(height: 16),
 
-                  // History list (condensed)
-                  if (_measurements.isNotEmpty)
+                  // ── History list ──────────────────────────────────
+                  if (filtered.isNotEmpty)
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -316,9 +408,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                   fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 12),
-                            ..._measurements.reversed
-                                .take(10)
-                                .map((m) {
+                            ...filtered.reversed.take(10).map((m) {
                               final dateStr = m['measurement_date']
                                       ?.toString()
                                       .substring(0, 10) ??
@@ -364,6 +454,143 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 }
 
+// ─── Body figure card ─────────────────────────────────────────────────────────
+
+class _BodyCard extends StatelessWidget {
+  final String? sex;
+  final double currentWeight;
+  final double? height;
+  final double? bmi;
+  final String? bmiCategory;
+  final Color? bmiColor;
+  final double? totalLost;
+
+  const _BodyCard({
+    required this.sex,
+    required this.currentWeight,
+    this.height,
+    this.bmi,
+    this.bmiCategory,
+    this.bmiColor,
+    this.totalLost,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isFemale = sex == 'female';
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Silhouette figure
+            Column(
+              children: [
+                Icon(
+                  isFemale ? Icons.woman : Icons.man,
+                  size: 96,
+                  color: kPrimary.withValues(alpha: 0.80),
+                ),
+                if (sex != null)
+                  Text(
+                    isFemale ? 'Femenino' : 'Masculino',
+                    style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 20),
+            // Stats column
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _StatRow(
+                    icon: Icons.monitor_weight_outlined,
+                    label: 'Peso actual',
+                    value: '${currentWeight.toStringAsFixed(1)} kg',
+                    color: kPrimary,
+                  ),
+                  if (height != null)
+                    _StatRow(
+                      icon: Icons.height,
+                      label: 'Estatura',
+                      value: '${height!.toStringAsFixed(0)} cm',
+                      color: Colors.blueGrey,
+                    ),
+                  if (bmi != null)
+                    _StatRow(
+                      icon: Icons.calculate_outlined,
+                      label: 'IMC',
+                      value:
+                          '${bmi!.toStringAsFixed(1)} · ${bmiCategory ?? ''}',
+                      color: bmiColor ?? Colors.grey,
+                    ),
+                  if (totalLost != null && totalLost!.abs() > 0.1)
+                    _StatRow(
+                      icon: totalLost! > 0
+                          ? Icons.trending_down
+                          : Icons.trending_up,
+                      label: totalLost! > 0 ? 'Has bajado' : 'Has subido',
+                      value: '${totalLost!.abs().toStringAsFixed(1)} kg',
+                      color: totalLost! > 0 ? Colors.green : Colors.orange,
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _StatRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style:
+                        TextStyle(fontSize: 10, color: Colors.grey[500])),
+                Text(
+                  value,
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: color),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Mini summary card ────────────────────────────────────────────────────────
+
 class _MiniCard extends StatelessWidget {
   final String label;
   final String value;
@@ -385,14 +612,11 @@ class _MiniCard extends StatelessWidget {
             Text(
               value,
               style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: color),
+                  fontSize: 18, fontWeight: FontWeight.bold, color: color),
             ),
             const SizedBox(height: 4),
             Text(label,
-                style:
-                    TextStyle(fontSize: 11, color: Colors.grey[600])),
+                style: TextStyle(fontSize: 11, color: Colors.grey[600])),
           ],
         ),
       ),

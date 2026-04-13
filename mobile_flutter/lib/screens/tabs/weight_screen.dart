@@ -16,6 +16,7 @@ class _WeightScreenState extends State<WeightScreen> {
   List<Map<String, dynamic>> _measurements = [];
   Map<String, dynamic>? _profile;
   bool _loading = true;
+  bool _useLbs = false;
 
   @override
   void initState() {
@@ -41,19 +42,43 @@ class _WeightScreenState extends State<WeightScreen> {
     }
   }
 
-  void _showAddDialog() {
-    _showMeasurementDialog(null);
+  // Unit conversion helpers
+  double _toDisplay(double kg) => _useLbs ? kg * 2.20462 : kg;
+  double _toKg(double display) => _useLbs ? display / 2.20462 : display;
+  String get _unit => _useLbs ? 'lbs' : 'kg';
+
+  // BMI helpers
+  double? _calcBmi(double weightKg) {
+    final height = (_profile?['height_cm'] as num?)?.toDouble();
+    if (height == null || height == 0) return null;
+    final h = height / 100;
+    return weightKg / (h * h);
   }
 
-  void _showEditDialog(Map<String, dynamic> measurement) {
-    _showMeasurementDialog(measurement);
+  String _bmiLabel(double bmi) {
+    if (bmi < 18.5) return 'Bajo peso';
+    if (bmi < 25) return 'Normal';
+    if (bmi < 30) return 'Sobrepeso';
+    return 'Obesidad';
   }
+
+  Color _bmiColor(double bmi) {
+    if (bmi < 18.5) return Colors.blue;
+    if (bmi < 25) return Colors.green;
+    if (bmi < 30) return Colors.orange;
+    return Colors.red;
+  }
+
+  void _showAddDialog() => _showMeasurementDialog(null);
+  void _showEditDialog(Map<String, dynamic> m) => _showMeasurementDialog(m);
 
   void _showMeasurementDialog(Map<String, dynamic>? existing) {
+    final existingKg = (existing?['weight_kg'] as num?)?.toDouble();
     final weightController = TextEditingController(
-        text: existing?['weight_kg']?.toString() ?? '');
-    final notesController = TextEditingController(
-        text: existing?['notes']?.toString() ?? '');
+      text: existingKg != null ? _toDisplay(existingKg).toStringAsFixed(1) : '',
+    );
+    final notesController =
+        TextEditingController(text: existing?['notes']?.toString() ?? '');
     DateTime selectedDate = existing != null
         ? DateTime.tryParse(
                 existing['measurement_date'].toString().substring(0, 10)) ??
@@ -84,22 +109,23 @@ class _WeightScreenState extends State<WeightScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Header
                 Row(
                   children: [
                     Text(
-                      existing == null
-                          ? 'Registrar peso'
-                          : 'Editar registro',
+                      existing == null ? 'Registrar peso' : 'Editar registro',
                       style: const TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     const Spacer(),
                     IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(ctx)),
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
+
                 // Date picker
                 InkWell(
                   onTap: () async {
@@ -120,13 +146,15 @@ class _WeightScreenState extends State<WeightScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
+
+                // Weight field
                 TextFormField(
                   controller: weightController,
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(
-                    labelText: 'Peso (kg)',
-                    prefixIcon: Icon(Icons.monitor_weight_outlined),
+                  decoration: InputDecoration(
+                    labelText: 'Peso ($_unit)',
+                    prefixIcon: const Icon(Icons.monitor_weight_outlined),
                   ),
                   validator: (v) {
                     if (v == null || v.isEmpty) return 'Ingresa el peso';
@@ -135,6 +163,8 @@ class _WeightScreenState extends State<WeightScreen> {
                   },
                 ),
                 const SizedBox(height: 12),
+
+                // Notes
                 TextFormField(
                   controller: notesController,
                   maxLines: 2,
@@ -144,53 +174,76 @@ class _WeightScreenState extends State<WeightScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Photo
+
+                // Photo — preview + camera + gallery
                 Row(
                   children: [
                     if (selectedImage != null)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.file(selectedImage!,
-                            width: 64, height: 64, fit: BoxFit.cover),
+                            width: 60, height: 60, fit: BoxFit.cover),
                       )
                     else if (existing?['photo_url'] != null)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
                           existing!['photo_url'].toString(),
-                          width: 64,
-                          height: 64,
+                          width: 60,
+                          height: 60,
                           fit: BoxFit.cover,
                           errorBuilder: (ctx2, err, st) =>
                               const Icon(Icons.broken_image),
                         ),
                       ),
-                    const SizedBox(width: 12),
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.photo_camera_outlined),
-                      label: const Text('Foto'),
-                      onPressed: () async {
-                        final picker = ImagePicker();
-                        final picked = await picker.pickImage(
+                    if (selectedImage != null ||
+                        existing?['photo_url'] != null)
+                      const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.photo_camera_outlined, size: 17),
+                        label: const Text('Cámara'),
+                        onPressed: () async {
+                          final picked = await ImagePicker().pickImage(
+                            source: ImageSource.camera,
+                            imageQuality: 80,
+                            maxWidth: 1080,
+                          );
+                          if (picked != null) {
+                            setDialogState(() => selectedImage = File(picked.path));
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.photo_library_outlined, size: 17),
+                        label: const Text('Galería'),
+                        onPressed: () async {
+                          final picked = await ImagePicker().pickImage(
                             source: ImageSource.gallery,
                             imageQuality: 80,
-                            maxWidth: 1080);
-                        if (picked != null) {
-                          setDialogState(
-                              () => selectedImage = File(picked.path));
-                        }
-                      },
+                            maxWidth: 1080,
+                          );
+                          if (picked != null) {
+                            setDialogState(() => selectedImage = File(picked.path));
+                          }
+                        },
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 20),
+
                 ElevatedButton(
                   onPressed: () async {
                     if (!formKey.currentState!.validate()) return;
+                    final displayVal = double.parse(weightController.text);
                     Navigator.pop(ctx);
                     await _saveMeasurement(
                       existing: existing,
-                      weight: double.parse(weightController.text),
+                      weightKg: _toKg(displayVal),
                       date: selectedDate,
                       notes: notesController.text.trim(),
                       imageFile: selectedImage,
@@ -208,7 +261,7 @@ class _WeightScreenState extends State<WeightScreen> {
 
   Future<void> _saveMeasurement({
     Map<String, dynamic>? existing,
-    required double weight,
+    required double weightKg,
     required DateTime date,
     String? notes,
     File? imageFile,
@@ -216,15 +269,13 @@ class _WeightScreenState extends State<WeightScreen> {
     if (_profile == null) return;
     try {
       String? photoUrl = existing?['photo_url']?.toString();
-
       if (imageFile != null) {
-        photoUrl =
-            await uploadPhoto(imageFile, _profile!['id'].toString());
+        photoUrl = await uploadPhoto(imageFile, _profile!['id'].toString());
       }
 
       final data = {
         'patient_id': _profile!['id'].toString(),
-        'weight_kg': weight,
+        'weight_kg': weightKg,
         'measurement_date': date.toIso8601String(),
         'notes': notes,
         'photo_url': photoUrl,
@@ -236,7 +287,6 @@ class _WeightScreenState extends State<WeightScreen> {
         data.remove('patient_id');
         await updateMeasurement(existing['id'].toString(), data);
       }
-
       await _loadData();
     } catch (e) {
       if (mounted) {
@@ -255,12 +305,14 @@ class _WeightScreenState extends State<WeightScreen> {
         content: const Text('¿Seguro que deseas eliminar este registro?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              style: TextButton.styleFrom(foregroundColor: kError),
-              child: const Text('Eliminar')),
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: kError),
+            child: const Text('Eliminar'),
+          ),
         ],
       ),
     );
@@ -273,7 +325,48 @@ class _WeightScreenState extends State<WeightScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Peso')),
+      appBar: AppBar(
+        title: const Text('Peso'),
+        actions: [
+          // kg / lbs toggle
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'kg',
+                  style: TextStyle(
+                    color: !_useLbs ? Colors.white : Colors.white54,
+                    fontWeight:
+                        !_useLbs ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 13,
+                  ),
+                ),
+                Switch(
+                  value: _useLbs,
+                  onChanged: (v) => setState(() => _useLbs = v),
+                  activeThumbColor: Colors.white,
+                  activeTrackColor: Colors.white30,
+                  inactiveThumbColor: Colors.white,
+                  inactiveTrackColor: Colors.white30,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                Text(
+                  'lbs',
+                  style: TextStyle(
+                    color: _useLbs ? Colors.white : Colors.white54,
+                    fontWeight:
+                        _useLbs ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+            ),
+          ),
+        ],
+      ),
       backgroundColor: kBackground,
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddDialog,
@@ -291,17 +384,13 @@ class _WeightScreenState extends State<WeightScreen> {
                           Icon(Icons.monitor_weight_outlined,
                               size: 64, color: Colors.grey[400]),
                           const SizedBox(height: 16),
-                          Text(
-                            'Sin registros aún',
-                            style: TextStyle(
-                                fontSize: 16, color: Colors.grey[600]),
-                          ),
+                          Text('Sin registros aún',
+                              style: TextStyle(
+                                  fontSize: 16, color: Colors.grey[600])),
                           const SizedBox(height: 8),
-                          Text(
-                            'Toca + para agregar tu primer registro',
-                            style: TextStyle(
-                                fontSize: 13, color: Colors.grey[500]),
-                          ),
+                          Text('Toca + para agregar tu primer registro',
+                              style: TextStyle(
+                                  fontSize: 13, color: Colors.grey[500])),
                         ],
                       ),
                     )
@@ -310,12 +399,15 @@ class _WeightScreenState extends State<WeightScreen> {
                       itemCount: _measurements.length,
                       itemBuilder: (ctx, i) {
                         final m = _measurements[i];
-                        final dateStr =
-                            m['measurement_date']?.toString().substring(0, 10) ??
-                                '';
+                        final dateStr = m['measurement_date']
+                                ?.toString()
+                                .substring(0, 10) ??
+                            '';
                         final date = DateTime.tryParse(dateStr);
-                        final weight =
+                        final weightKg =
                             (m['weight_kg'] as num?)?.toDouble() ?? 0;
+                        final display = _toDisplay(weightKg);
+                        final bmi = _calcBmi(weightKg);
 
                         return Card(
                           margin: const EdgeInsets.only(bottom: 12),
@@ -330,19 +422,20 @@ class _WeightScreenState extends State<WeightScreen> {
                                       width: 48,
                                       height: 48,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) => Icon(
+                                      errorBuilder: (ctx2, err, st) => Icon(
                                           Icons.monitor_weight_outlined,
                                           color: kPrimary),
                                     ),
                                   )
                                 : CircleAvatar(
-                                    backgroundColor: kPrimary.withValues(alpha: 0.1),
+                                    backgroundColor:
+                                        kPrimary.withValues(alpha: 0.1),
                                     child: Icon(
                                         Icons.monitor_weight_outlined,
                                         color: kPrimary),
                                   ),
                             title: Text(
-                              '${weight.toStringAsFixed(1)} kg',
+                              '${display.toStringAsFixed(1)} $_unit',
                               style: const TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 18),
                             ),
@@ -352,15 +445,40 @@ class _WeightScreenState extends State<WeightScreen> {
                                 if (date != null)
                                   Text(DateFormat('dd MMM yyyy', 'es')
                                       .format(date)),
+                                if (bmi != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: _bmiColor(bmi)
+                                            .withValues(alpha: 0.12),
+                                        borderRadius:
+                                            BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        'IMC ${bmi.toStringAsFixed(1)} · ${_bmiLabel(bmi)}',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: _bmiColor(bmi),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 if (m['notes'] != null &&
                                     m['notes'].toString().isNotEmpty)
-                                  Text(
-                                    m['notes'].toString(),
-                                    style: TextStyle(
-                                        color: Colors.grey[500],
-                                        fontSize: 12),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 2),
+                                    child: Text(
+                                      m['notes'].toString(),
+                                      style: TextStyle(
+                                          color: Colors.grey[500],
+                                          fontSize: 12),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                               ],
                             ),
