@@ -146,12 +146,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         SegmentedButton<String>(
                           segments: const [
                             ButtonSegment(
-                              value: 'male',
+                              value: 'masculino',
                               label: Text('Masculino'),
                               icon: Icon(Icons.man, size: 18),
                             ),
                             ButtonSegment(
-                              value: 'female',
+                              value: 'femenino',
                               label: Text('Femenino'),
                               icon: Icon(Icons.woman, size: 18),
                             ),

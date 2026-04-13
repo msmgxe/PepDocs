@@ -41,12 +41,20 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
+  late final _sub = supabase.auth.onAuthStateChange.listen((_) {
+    if (mounted) setState(() {});
+  });
+
   @override
   void initState() {
     super.initState();
-    supabase.auth.onAuthStateChange.listen((data) {
-      if (mounted) setState(() {});
-    });
+    _sub; // activate
+  }
+
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
   }
 
   @override

@@ -58,7 +58,11 @@ Future<Map<String, dynamic>> upsertProfile(Map<String, dynamic> data) async {
   } else {
     final inserted = await supabase
         .from('profiles')
-        .insert({...data, 'auth_uid': user.id})
+        .insert({
+          ...data,
+          'auth_uid': user.id,
+          if (user.email != null) 'email': user.email,
+        })
         .select()
         .single();
     return inserted;

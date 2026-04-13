@@ -479,7 +479,7 @@ class _BodyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isFemale = sex == 'female';
+    final isFemale = sex == 'femenino';
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),

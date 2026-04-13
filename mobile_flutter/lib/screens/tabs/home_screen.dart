@@ -173,9 +173,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         if (sex != null)
                           Expanded(
                             child: _InfoChip(
-                              icon: sex == 'female' ? Icons.woman : Icons.man,
+                              icon: sex == 'femenino' ? Icons.woman : Icons.man,
                               label: 'Sexo',
-                              value: sex == 'female' ? 'Femenino' : 'Masculino',
+                              value: sex == 'femenino' ? 'Femenino' : 'Masculino',
                             ),
                           ),
                         if (sex != null && age != null)
