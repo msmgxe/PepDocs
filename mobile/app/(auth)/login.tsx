@@ -21,24 +21,26 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
-      if (error.message.toLowerCase().includes('email not confirmed')) {
-        Alert.alert(
-          'Correo no confirmado',
-          'Revisa tu bandeja de entrada y toca el enlace de confirmación antes de iniciar sesión.'
-        );
+      if (error) {
+        // Detectar correo sin confirmar (mensaje inofensivo) sin exponer el error interno
+        if (error.message.toLowerCase().includes('email not confirmed')) {
+          Alert.alert(
+            'Correo no confirmado',
+            'Revisa tu bandeja de entrada y toca el enlace de confirmación antes de iniciar sesión.'
+          );
+        } else {
+          // Mensaje genérico para evitar enumeración de usuarios
+          Alert.alert('Error', 'Correo o contraseña incorrectos.');
+        }
       } else {
-        Alert.alert('Error de Login', error.message);
+        router.replace('/(tabs)');
       }
-    } else {
-      router.replace('/(tabs)');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return (

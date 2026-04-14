@@ -348,11 +348,11 @@ export default function WeightScreen() {
       const { data: uploadData, error } = await supabase.storage
         .from('patient-photos')
         .upload(fileName, bytes.buffer, { contentType: 'image/jpeg', upsert: false });
-      if (error) { Alert.alert('Error al subir foto', error.message); return null; }
+      if (error) { Alert.alert('Error', 'No se pudo subir la foto. Intenta de nuevo.'); return null; }
       const { data } = supabase.storage.from('patient-photos').getPublicUrl(uploadData.path);
       return data.publicUrl;
-    } catch (err: any) {
-      Alert.alert('Error al subir foto', err?.message ?? 'Error desconocido');
+    } catch {
+      Alert.alert('Error', 'No se pudo subir la foto. Intenta de nuevo.');
       return null;
     } finally {
       setUploading(false);
@@ -361,6 +361,9 @@ export default function WeightScreen() {
 
   async function saveWeight() {
     if (!weightDisplay || isNaN(parseFloat(weightDisplay))) { Alert.alert('Error', 'Por favor ingresa un peso válido'); return; }
+    const displayVal = parseFloat(weightDisplay);
+    const finalKgCheck = unit === 'kg' ? displayVal : lbsToKg(displayVal);
+    if (finalKgCheck < 1 || finalKgCheck > 600) { Alert.alert('Peso fuera de rango', 'Ingresa un valor entre 1 y 600 kg.'); return; }
     if (!profile) { Alert.alert('Error', 'No se encontró tu perfil. Intenta recargar.'); return; }
     setLoading(true);
     const photoUrl = await uploadPhoto(profile.id, photoBase64);
@@ -375,7 +378,7 @@ export default function WeightScreen() {
     if (photoUrl) insertPayload.photo_url = photoUrl;
     const { error } = await supabase.from('measurements').insert([insertPayload]);
     if (error) {
-      Alert.alert('Error', error.message);
+      Alert.alert('Error', 'No se pudo guardar el registro. Intenta de nuevo.');
     } else {
       // Update current_weight_kg with the latest measurement by date
       const latestDate = [...allHistory.map(m => m.measurement_date), dateStr].sort().reverse()[0];
@@ -405,7 +408,7 @@ export default function WeightScreen() {
 
     if (error) {
       setAllHistory(snapshot);
-      Alert.alert('Error al eliminar', error.message);
+      Alert.alert('Error', 'No se pudieron eliminar los registros. Intenta de nuevo.');
       return;
     }
 
@@ -508,7 +511,7 @@ export default function WeightScreen() {
       .update(updatePayload)
       .eq('id', editItem.id);
     setSavingEdit(false);
-    if (error) { Alert.alert('Error', error.message); return; }
+    if (error) { Alert.alert('Error', 'No se pudo actualizar el registro. Intenta de nuevo.'); return; }
 
     const resolvedPhoto = newPhotoUrl !== undefined ? newPhotoUrl : editItem.photo_url;
     setAllHistory(prev => prev.map(m =>

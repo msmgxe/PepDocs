@@ -91,26 +91,40 @@ export default function OnboardingScreen() {
     ? Math.min(97, Math.max(3, ((bmi - 15) / 30) * 100))
     : 50;
 
+  // Regex de formato básico de teléfono (7–20 dígitos, permite +, espacios, guiones)
+  const PHONE_REGEX = /^\+?[\d\s\-().]{7,20}$/;
+
   function validate(): boolean {
     if (step === 1) {
-      if (!phone.trim()) { Alert.alert('Falta tu teléfono', 'Por favor ingresa tu número de WhatsApp'); return false; }
+      if (!phone.trim()) {
+        Alert.alert('Falta tu teléfono', 'Por favor ingresa tu número de WhatsApp'); return false;
+      }
+      if (!PHONE_REGEX.test(phone.trim())) {
+        Alert.alert('Teléfono inválido', 'Ingresa un número válido (solo dígitos, +, espacios o guiones)'); return false;
+      }
     }
     if (step === 2) {
-      if (!weightVal || parseFloat(weightVal) <= 0) { Alert.alert('Falta tu peso', 'Ingresa tu peso actual'); return false; }
-      if (!goalVal || parseFloat(goalVal) <= 0) { Alert.alert('Falta tu meta', 'Ingresa tu peso meta'); return false; }
+      const w = parseFloat(weightVal);
+      const g = parseFloat(goalVal);
+      if (!weightVal || w <= 0) { Alert.alert('Falta tu peso', 'Ingresa tu peso actual'); return false; }
+      if (w < 20 || w > 400) { Alert.alert('Peso fuera de rango', 'Ingresa un peso entre 20 y 400 kg (o equivalente en lbs)'); return false; }
+      if (!goalVal || g <= 0) { Alert.alert('Falta tu meta', 'Ingresa tu peso meta'); return false; }
+      if (g < 20 || g > 400) { Alert.alert('Meta fuera de rango', 'Ingresa un peso meta entre 20 y 400 kg (o equivalente en lbs)'); return false; }
     }
     if (step === 3) {
-      if (heightUnit === 'cm' && (!heightVal || parseFloat(heightVal) <= 0)) {
-        Alert.alert('Falta tu altura', 'Ingresa tu altura en cm'); return false;
-      }
-      if (heightUnit === 'ft' && (!heightFt)) {
-        Alert.alert('Falta tu altura', 'Ingresa tu altura en pies'); return false;
+      if (heightUnit === 'cm') {
+        const h = parseFloat(heightVal);
+        if (!heightVal || h <= 0) { Alert.alert('Falta tu altura', 'Ingresa tu altura en cm'); return false; }
+        if (h < 50 || h > 280) { Alert.alert('Altura fuera de rango', 'Ingresa una altura entre 50 y 280 cm'); return false; }
+      } else {
+        if (!heightFt) { Alert.alert('Falta tu altura', 'Ingresa tu altura en pies'); return false; }
+        if (heightCm < 50 || heightCm > 280) { Alert.alert('Altura fuera de rango', 'Ingresa una altura válida'); return false; }
       }
     }
     if (step === 4) {
-      if (!ageVal || parseInt(ageVal) <= 0 || parseInt(ageVal) > 120) {
-        Alert.alert('Falta tu edad', 'Ingresa una edad válida'); return false;
-      }
+      const a = parseInt(ageVal);
+      if (!ageVal || a <= 0 || a > 120) { Alert.alert('Falta tu edad', 'Ingresa una edad válida'); return false; }
+      if (a < 16) { Alert.alert('Edad no válida', 'Debes tener al menos 16 años para usar esta app'); return false; }
     }
     if (step === 5) {
       if (!sex) { Alert.alert('Selecciona tu sexo', 'Elige una opción para continuar'); return false; }
@@ -132,6 +146,14 @@ export default function OnboardingScreen() {
 
   async function completeOnboarding() {
     if (!user) return;
+
+    // Guard final: re-validar rangos antes del INSERT para evitar datos corruptos
+    if (weightKg < 20 || weightKg > 400 || goalKg < 20 || goalKg > 400 ||
+        heightCm < 50 || heightCm > 280 || age < 16 || age > 120) {
+      Alert.alert('Datos inválidos', 'Revisa tu peso, altura y edad antes de continuar.');
+      return;
+    }
+
     setLoading(true);
 
     // Upsert profile (handles case where email already exists from data import)
@@ -157,7 +179,7 @@ export default function OnboardingScreen() {
       .single();
 
     if (profileError) {
-      Alert.alert('Error al guardar perfil', profileError.message);
+      Alert.alert('Error', 'No se pudo guardar tu perfil. Intenta de nuevo.');
       setLoading(false);
       return;
     }

@@ -16,6 +16,9 @@ import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
+// Regex para validar formato básico de email
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function VerifyScreen() {
   const { email } = useLocalSearchParams<{ email: string }>();
   const [code, setCode] = useState('');
@@ -25,6 +28,14 @@ export default function VerifyScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const theme = Colors[colorScheme];
 
+  // Validar que el email del deep link sea un formato válido
+  // antes de usarlo en llamadas a Supabase
+  const safeEmail = typeof email === 'string' && EMAIL_REGEX.test(email) ? email : null;
+  if (!safeEmail) {
+    router.replace('/(auth)/login');
+    return null;
+  }
+
   async function verify() {
     const otp = code.trim();
     if (otp.length < 6) {
@@ -33,7 +44,7 @@ export default function VerifyScreen() {
     }
     setLoading(true);
     const { error } = await supabase.auth.verifyOtp({
-      email: email as string,
+      email: safeEmail,
       token: otp,
       type: 'signup',
     });
@@ -47,12 +58,13 @@ export default function VerifyScreen() {
 
   async function resend() {
     setResending(true);
-    const { error } = await supabase.auth.resend({ type: 'signup', email: email as string });
+    const { error } = await supabase.auth.resend({ type: 'signup', email: safeEmail });
     setResending(false);
     if (error) {
-      Alert.alert('Error', error.message);
+      // Mensaje genérico — no exponer detalles de rate-limit del servidor
+      Alert.alert('Error', 'No se pudo reenviar el código. Intenta más tarde.');
     } else {
-      Alert.alert('Código reenviado', `Revisa ${email}`);
+      Alert.alert('Código reenviado', `Revisa ${safeEmail}`);
       setCode('');
     }
   }
@@ -68,7 +80,7 @@ export default function VerifyScreen() {
         <Text style={[styles.title, { color: theme.lilacDark }]}>Verifica tu correo</Text>
         <Text style={[styles.subtitle, { color: theme.icon }]}>
           Enviamos un código de verificación a{'\n'}
-          <Text style={{ fontWeight: '700', color: theme.text }}>{email}</Text>
+          <Text style={{ fontWeight: '700', color: theme.text }}>{safeEmail}</Text>
         </Text>
 
         <TextInput

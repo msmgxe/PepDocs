@@ -41,34 +41,38 @@ export default function RegisterScreen() {
     }
 
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName.trim() },
-      },
-    });
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName.trim() } },
+      });
 
-    if (error) {
-      // "User already registered" → direct to login
-      if (error.message.toLowerCase().includes('already registered') ||
-          error.message.toLowerCase().includes('already been registered')) {
-        Alert.alert(
-          'Correo ya registrado',
-          'Este correo ya tiene una cuenta. Inicia sesión o usa "Olvidé mi contraseña".',
-          [{ text: 'Ir a Login', onPress: () => router.replace('/(auth)/login') }]
-        );
-      } else {
-        Alert.alert('Error de Registro', error.message);
+      if (error) {
+        // Correo ya registrado → redirigir a login sin exponer detalles internos
+        if (
+          error.message.toLowerCase().includes('already registered') ||
+          error.message.toLowerCase().includes('already been registered')
+        ) {
+          Alert.alert(
+            'Correo ya registrado',
+            'Este correo ya tiene una cuenta. Inicia sesión o usa "Olvidé mi contraseña".',
+            [{ text: 'Ir a Login', onPress: () => router.replace('/(auth)/login') }]
+          );
+        } else {
+          // Mensaje genérico para no exponer detalles del servidor
+          Alert.alert('Error', 'No se pudo crear la cuenta. Intenta de nuevo.');
+        }
+      } else if (data.session) {
+        // Confirmación de email desactivada → directo a onboarding
+        router.replace('/(onboarding)');
+      } else if (data.user && !data.session) {
+        // Correo de confirmación enviado → pantalla OTP
+        router.push({ pathname: '/(auth)/verify', params: { email } });
       }
-    } else if (data.session) {
-      // Email confirmation disabled → go directly to onboarding
-      router.replace('/(onboarding)');
-    } else if (data.user && !data.session) {
-      // Confirmation email sent → OTP screen
-      router.push({ pathname: '/(auth)/verify', params: { email } });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return (

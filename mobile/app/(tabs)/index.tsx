@@ -46,7 +46,7 @@ export default function HomeScreen() {
 
     const { data: profileData } = await supabase
       .from('profiles')
-      .select('*')
+      .select('id, full_name, registration_date, initial_weight_kg, current_weight_kg, goal_weight_kg, bmi, bmi_category, profile_notes')
       .eq('auth_uid', user.id)
       .single();
 
@@ -148,6 +148,7 @@ export default function HomeScreen() {
             { icon: 'scale-bathroom', label: 'Registrar Peso', onPress: () => { setDrawerOpen(false); router.push('/(tabs)/weight'); } },
             { icon: 'chart-line', label: 'Progreso', onPress: () => { setDrawerOpen(false); router.push('/(tabs)/progress'); } },
             { icon: 'calendar-month-outline', label: 'Calendario', onPress: () => { setDrawerOpen(false); router.push('/(tabs)/calendar'); } },
+            { icon: 'account-edit-outline', label: 'Mi Perfil', onPress: () => { setDrawerOpen(false); router.push('/(tabs)/profile'); } },
           ] as const).map(item => (
             <TouchableOpacity key={item.label} style={styles.drawerItem} onPress={item.onPress}>
               <MaterialCommunityIcons name={item.icon} size={20} color={theme.lilacDark} style={styles.drawerItemIcon} />
