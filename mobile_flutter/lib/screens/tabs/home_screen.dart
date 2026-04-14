@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
+import '../../services/units_service.dart';
 import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -262,7 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: _StatCard(
                           label: 'Peso actual',
                           value: currentWeight != null
-                              ? '${currentWeight.toStringAsFixed(1)} kg'
+                              ? UnitsService.instance.formatWeight(currentWeight)
                               : '—',
                           icon: Icons.monitor_weight_outlined,
                           color: kPrimary,

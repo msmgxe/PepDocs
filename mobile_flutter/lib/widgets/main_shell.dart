@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
+import '../services/units_service.dart';
 import '../screens/onboarding/onboarding_screen.dart';
 import '../screens/tabs/home_screen.dart';
 import '../screens/tabs/weight_screen.dart';
@@ -64,7 +65,10 @@ class _MainShellState extends State<MainShell> {
     }
 
     return Scaffold(
-      body: _tabs[_currentIndex],
+      body: ListenableBuilder(
+        listenable: UnitsService.instance,
+        builder: (context, _) => _tabs[_currentIndex],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (i) => setState(() => _currentIndex = i),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
+import '../../services/units_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -41,9 +42,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (p != null && mounted) {
         setState(() {
           _nameController.text = p['full_name']?.toString() ?? '';
-          _heightController.text = p['height_cm']?.toString() ?? '';
-          _weightController.text = p['current_weight_kg']?.toString() ?? '';
-          _targetController.text = p['goal_weight_kg']?.toString() ?? '';
+          final rawH = (p['height_cm'] as num?)?.toDouble() ?? 0.0;
+          final rawW = (p['current_weight_kg'] as num?)?.toDouble() ?? 0.0;
+          final rawGW = (p['goal_weight_kg'] as num?)?.toDouble() ?? 0.0;
+          
+          final units = UnitsService.instance;
+          
+          // For height, if ft, convert to total inches as single input? Or keep cm but display ft?
+          // Since it's a single input field, we display total inches or reverse convert. Just let them input in the unit they selected.
+          // Wait! For ft/in it's hard to use one field. Let's just store simple double unit for height if ft (total feet as decimal? No, cm is easier).
+          // Actually, let's just reverse calculate.
+          _heightController.text = units.isFt ? (rawH / 30.48).toStringAsFixed(1) : (rawH > 0 ? rawH.toStringAsFixed(0) : '');
+          _weightController.text = rawW > 0 ? units.displayWeight(rawW).toStringAsFixed(1) : '';
+          _targetController.text = rawGW > 0 ? units.displayWeight(rawGW).toStringAsFixed(1) : '';
           _selectedSex = p['sex']?.toString();
           final bs = p['birth_date']?.toString();
           if (bs != null && bs.length >= 10) {
@@ -76,9 +87,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       await upsertProfile({
         'full_name': _nameController.text.trim(),
-        'height_cm': double.tryParse(_heightController.text) ?? 0,
-        'current_weight_kg': double.tryParse(_weightController.text) ?? 0,
-        'goal_weight_kg': double.tryParse(_targetController.text) ?? 0,
+        'height_cm': UnitsService.instance.isFt 
+            ? (double.tryParse(_heightController.text) ?? 0) * 30.48 
+            : (double.tryParse(_heightController.text) ?? 0),
+        'current_weight_kg': UnitsService.instance.reverseWeight(double.tryParse(_weightController.text) ?? 0),
+        'goal_weight_kg': UnitsService.instance.reverseWeight(double.tryParse(_targetController.text) ?? 0),
         if (_selectedSex != null) 'sex': _selectedSex,
         if (_birthDate != null)
           'birth_date': _birthDate!.toIso8601String().substring(0, 10),
@@ -117,6 +130,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+
+                    // ── Preferencias de Visualización ─────────────────────
+                    ListenableBuilder(
+                      listenable: UnitsService.instance,
+                      builder: (context, _) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4, bottom: 8),
+                            child: Text('Sistema de unidades', style: TextStyle(fontSize: 13, color: Colors.grey[600], fontWeight: FontWeight.bold)),
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: SegmentedButton<bool>(
+                                  segments: const [
+                                    ButtonSegment(value: false, label: Text('kg')),
+                                    ButtonSegment(value: true, label: Text('lbs')),
+                                  ],
+                                  selected: {UnitsService.instance.isLbs},
+                                  onSelectionChanged: (s) {
+                                    final toLbs = s.first;
+                                    final currentW = double.tryParse(_weightController.text);
+                                    if (currentW != null) {
+                                      _weightController.text = toLbs ? (currentW * 2.20462).toStringAsFixed(1) : (currentW / 2.20462).toStringAsFixed(1);
+                                    }
+                                    final currentT = double.tryParse(_targetController.text);
+                                    if (currentT != null) {
+                                      _targetController.text = toLbs ? (currentT * 2.20462).toStringAsFixed(1) : (currentT / 2.20462).toStringAsFixed(1);
+                                    }
+                                    UnitsService.instance.setWeightUnit(toLbs);
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: SegmentedButton<bool>(
+                                  segments: const [
+                                    ButtonSegment(value: false, label: Text('cm')),
+                                    ButtonSegment(value: true, label: Text('ft (decimal)')),
+                                  ],
+                                  selected: {UnitsService.instance.isFt},
+                                  onSelectionChanged: (s) {
+                                    final toFt = s.first;
+                                    final currentH = double.tryParse(_heightController.text);
+                                    if (currentH != null) {
+                                      _heightController.text = toFt ? (currentH / 30.48).toStringAsFixed(1) : (currentH * 30.48).toStringAsFixed(0);
+                                    }
+                                    UnitsService.instance.setHeightUnit(toFt);
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
                     // ── Nombre ────────────────────────────────────
                     TextFormField(
                       controller: _nameController,
@@ -196,8 +267,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
                       textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Estatura (cm)',
+                      decoration: InputDecoration(
+                        labelText: UnitsService.instance.isFt ? 'Estatura (ft decimales)' : 'Estatura (cm)',
                         prefixIcon: Icon(Icons.height),
                       ),
                       validator: (v) {
@@ -214,8 +285,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
                       textInputAction: TextInputAction.next,
-                      decoration: const InputDecoration(
-                        labelText: 'Peso actual (kg)',
+                      decoration: InputDecoration(
+                        labelText: 'Peso actual (${UnitsService.instance.weightUnitStr})',
                         prefixIcon: Icon(Icons.monitor_weight_outlined),
                       ),
                       validator: (v) {
@@ -233,8 +304,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const TextInputType.numberWithOptions(decimal: true),
                       textInputAction: TextInputAction.done,
                       onFieldSubmitted: (_) => _save(),
-                      decoration: const InputDecoration(
-                        labelText: 'Peso objetivo (kg)',
+                      decoration: InputDecoration(
+                        labelText: 'Peso objetivo (${UnitsService.instance.weightUnitStr})',
                         prefixIcon: Icon(Icons.flag_outlined),
                       ),
                       validator: (v) {

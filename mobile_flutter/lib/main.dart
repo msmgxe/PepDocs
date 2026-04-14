@@ -3,6 +3,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'constants/theme.dart';
 import 'services/supabase_service.dart';
+import 'services/units_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'widgets/main_shell.dart';
 
@@ -10,6 +11,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await initializeDateFormatting('es');
+  
+  await UnitsService.instance.init();
 
   await Supabase.initialize(
     url: supabaseUrl,

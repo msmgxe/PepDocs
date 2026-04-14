@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
+import '../../services/units_service.dart';
 import '../../utils/achievements_helper.dart';
 
 enum _Period { month1, month3, month6, all }
@@ -480,7 +481,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                           fontSize: 14),
                                     ),
                                     Text(
-                                      '${w.toStringAsFixed(1)} kg',
+                                      UnitsService.instance.formatWeight(w),
                                       style: const TextStyle(
                                           fontWeight: FontWeight.w600,
                                           fontSize: 14),
@@ -626,14 +627,14 @@ class _BodyCard extends StatelessWidget {
                   _StatRow(
                     icon: Icons.monitor_weight_outlined,
                     label: 'Peso actual',
-                    value: '${currentWeight.toStringAsFixed(1)} kg',
+                    value: UnitsService.instance.formatWeight(currentWeight),
                     color: kPrimary,
                   ),
                   if (height != null)
                     _StatRow(
                       icon: Icons.height,
                       label: 'Estatura',
-                      value: '${height!.toStringAsFixed(0)} cm',
+                      value: UnitsService.instance.formatHeight(height!),
                       color: Colors.blueGrey,
                     ),
                   if (bmi != null)
@@ -649,7 +650,7 @@ class _BodyCard extends StatelessWidget {
                           ? Icons.trending_down
                           : Icons.trending_up,
                       label: totalLost! > 0 ? 'Has bajado' : 'Has subido',
-                      value: '${totalLost!.abs().toStringAsFixed(1)} kg',
+                      value: UnitsService.instance.formatWeight(totalLost!.abs()),
                       color: totalLost! > 0 ? Colors.green : Colors.orange,
                     ),
                 ],
@@ -956,10 +957,10 @@ class _StatsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      _StatItem(label: 'INICIO', value: '${initialWeight.toStringAsFixed(1)} kg', icon: Icons.flag_outlined),
-      _StatItem(label: 'HOY',    value: '${currentWeight.toStringAsFixed(1)} kg', icon: Icons.place_outlined),
+      _StatItem(label: 'INICIO', value: UnitsService.instance.formatWeight(initialWeight), icon: Icons.flag_outlined),
+      _StatItem(label: 'HOY',    value: UnitsService.instance.formatWeight(currentWeight), icon: Icons.place_outlined),
       if (goalWeight != null && goalWeight! > 0)
-        _StatItem(label: 'META', value: '${goalWeight!.toStringAsFixed(1)} kg',  icon: Icons.gps_fixed),
+        _StatItem(label: 'META', value: UnitsService.instance.formatWeight(goalWeight!),  icon: Icons.gps_fixed),
     ];
 
     return Row(
@@ -1042,14 +1043,14 @@ class _SummaryCard extends StatelessWidget {
                   reachedGoal
                       ? '¡Meta alcanzada!'
                       : lost > 0
-                          ? 'Has bajado ${lost.toStringAsFixed(1)} kg'
-                          : 'Inicio en ${initialWeight.toStringAsFixed(1)} kg',
+                          ? 'Has bajado ${UnitsService.instance.formatWeight(lost)}'
+                          : 'Inicio en ${UnitsService.instance.formatWeight(initialWeight)}',
                   style: const TextStyle(
                       fontSize: 16, fontWeight: FontWeight.w700, color: kPrimary),
                 ),
                 if (!reachedGoal && goalWeight > 0)
                   Text(
-                    'Faltan ${toGoal.toStringAsFixed(1)} kg para tu meta de ${goalWeight.toStringAsFixed(0)} kg',
+                    'Faltan ${UnitsService.instance.formatWeight(toGoal)} para tu meta de ${UnitsService.instance.formatWeight(goalWeight)}',
                     style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                   )
                 else if (reachedGoal)

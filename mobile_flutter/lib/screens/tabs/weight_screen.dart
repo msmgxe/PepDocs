@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
+import '../../services/units_service.dart';
 
 class WeightScreen extends StatefulWidget {
   const WeightScreen({super.key});
@@ -16,7 +17,7 @@ class _WeightScreenState extends State<WeightScreen> {
   List<Map<String, dynamic>> _measurements = [];
   Map<String, dynamic>? _profile;
   bool _loading = true;
-  bool _useLbs = false;
+  
 
   @override
   void initState() {
@@ -44,8 +45,8 @@ class _WeightScreenState extends State<WeightScreen> {
   }
 
   // Unit conversion helpers
-  double _toDisplay(double kg) => _useLbs ? kg * 2.20462 : kg;
-  String get _unit => _useLbs ? 'lbs' : 'kg';
+  double _toDisplay(double kg) => UnitsService.instance.displayWeight(kg);
+  String get _unit => UnitsService.instance.weightUnitStr;
 
   // BMI helpers
   double? _calcBmi(double weightKg) {
@@ -74,7 +75,7 @@ class _WeightScreenState extends State<WeightScreen> {
 
   void _showMeasurementDialog(Map<String, dynamic>? existing) {
     final existingKg = (existing?['weight_kg'] as num?)?.toDouble();
-    bool dialogUseLbs = _useLbs;
+    bool dialogUseLbs = UnitsService.instance.isLbs;
 
     double toDisplay(double kg) => dialogUseLbs ? kg * 2.20462 : kg;
     double toKg(double display) => dialogUseLbs ? display / 2.20462 : display;
@@ -132,49 +133,7 @@ class _WeightScreenState extends State<WeightScreen> {
                 ),
                 const SizedBox(height: 4),
 
-                // kg / lbs toggle inside dialog
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('kg',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: !dialogUseLbs
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                          color: !dialogUseLbs ? kPrimary : Colors.grey,
-                        )),
-                    Switch(
-                      value: dialogUseLbs,
-                      onChanged: (v) {
-                        final current =
-                            double.tryParse(weightController.text);
-                        setDialogState(() {
-                          dialogUseLbs = v;
-                          if (current != null) {
-                            // v=true → switching to lbs: multiply by 2.20462
-                            // v=false → switching to kg: divide by 2.20462
-                            weightController.text = (v
-                                    ? current * 2.20462
-                                    : current / 2.20462)
-                                .toStringAsFixed(1);
-                          }
-                        });
-                      },
-                      activeThumbColor: kPrimary,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    Text('lbs',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: dialogUseLbs
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                          color: dialogUseLbs ? kPrimary : Colors.grey,
-                        )),
-                  ],
-                ),
-                const SizedBox(height: 8),
+
 
                 // Date picker
                 InkWell(
@@ -378,43 +337,7 @@ class _WeightScreenState extends State<WeightScreen> {
       appBar: AppBar(
         title: const Text('Peso'),
         actions: [
-          // kg / lbs toggle
-          Padding(
-            padding: const EdgeInsets.only(right: 4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'kg',
-                  style: TextStyle(
-                    color: !_useLbs ? Colors.white : Colors.white54,
-                    fontWeight:
-                        !_useLbs ? FontWeight.bold : FontWeight.normal,
-                    fontSize: 13,
-                  ),
-                ),
-                Switch(
-                  value: _useLbs,
-                  onChanged: (v) => setState(() => _useLbs = v),
-                  activeThumbColor: Colors.white,
-                  activeTrackColor: Colors.white30,
-                  inactiveThumbColor: Colors.white,
-                  inactiveTrackColor: Colors.white30,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                Text(
-                  'lbs',
-                  style: TextStyle(
-                    color: _useLbs ? Colors.white : Colors.white54,
-                    fontWeight:
-                        _useLbs ? FontWeight.bold : FontWeight.normal,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
-          ),
+
         ],
       ),
       backgroundColor: kBackground,
