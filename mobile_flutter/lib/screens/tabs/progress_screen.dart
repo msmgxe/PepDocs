@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
+import '../../utils/achievements_helper.dart';
 
 enum _Period { month1, month3, month6, all }
 
@@ -20,6 +21,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   Map<String, dynamic>? _profile;
   bool _loading = true;
   _Period _period = _Period.all;
+  int _totalMeasurements = 0; // Total histórico de pesajes para cálculo de logros
 
   @override
   void initState() {
@@ -37,6 +39,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
         setState(() {
           _profile = profile;
           _measurements = measurements.reversed.toList(); // ascending for chart
+          _totalMeasurements = measurements.length;
         });
       }
     } catch (e) {
@@ -490,6 +493,59 @@ class _ProgressScreenState extends State<ProgressScreen> {
                         ),
                       ),
                     ),
+
+                  // ── Stats Row: INICIO | HOY | META ───────────────────────────
+                  // 3 tarjetas compactas por la imagen de referencia
+                  const SizedBox(height: 24),
+                  if (currentWeight != null)
+                    _StatsRow(
+                      initialWeight: firstWeight ?? currentWeight,
+                      currentWeight: currentWeight,
+                      goalWeight: targetWeight,
+                    ),
+
+                  // ── Summary Card ──────────────────────────────────────────────
+                  const SizedBox(height: 12),
+                  if (currentWeight != null && firstWeight != null &&
+                      firstWeight != currentWeight)
+                    _SummaryCard(
+                      initialWeight: firstWeight,
+                      currentWeight: currentWeight,
+                      goalWeight: targetWeight ?? 0,
+                    ),
+
+                  // ── Logros ────────────────────────────────────────────────────
+                  // Grid 2xN con badges desbloqueados/bloqueados
+                  const SizedBox(height: 24),
+                  const Text('Logros',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 12),
+                  _AchievementsGrid(
+                    achievements: calculateAchievements(
+                      initialWeight: firstWeight ?? (currentWeight ?? 0),
+                      currentWeight: currentWeight ?? 0,
+                      goalWeight: targetWeight ?? 0,
+                      bmi: bmi ?? 0,
+                      measurementCount: _totalMeasurements,
+                      age: (_profile?['age'] as num?)?.toInt(),
+                      sex: _profile?['sex']?.toString(),
+                    ),
+                  ),
+
+                  // ── Sugerencias ───────────────────────────────────────────────
+                  // 2 tarjetas (lila + amarillo) personalizadas por IMC y edad
+                  const SizedBox(height: 24),
+                  const Text('Sugerencias del día',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 12),
+                  _SuggestionsRow(
+                    suggestions: getSuggestions(
+                      bmi: bmi ?? 0,
+                      age: (_profile?['age'] as num?)?.toInt(),
+                      sex: _profile?['sex']?.toString(),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
                 ],
               ),
             ),
@@ -602,6 +658,7 @@ class _BodyCard extends StatelessWidget {
           ],
         ),
       ),
+
     );
   }
 }
@@ -875,6 +932,260 @@ class _LegendDot extends StatelessWidget {
         const SizedBox(width: 4),
         Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
       ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ── Stats Row: INICIO | HOY | META ──────────────────────────────────────────
+// Muestra tres tarjetas compactas con los pesos clave del paciente,
+// fiel al diseño de la imagen de referencia.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _StatsRow extends StatelessWidget {
+  final double initialWeight;
+  final double currentWeight;
+  final double? goalWeight;
+
+  const _StatsRow({
+    required this.initialWeight,
+    required this.currentWeight,
+    this.goalWeight,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      _StatItem(label: 'INICIO', value: '${initialWeight.toStringAsFixed(1)} kg', icon: Icons.flag_outlined),
+      _StatItem(label: 'HOY',    value: '${currentWeight.toStringAsFixed(1)} kg', icon: Icons.place_outlined),
+      if (goalWeight != null && goalWeight! > 0)
+        _StatItem(label: 'META', value: '${goalWeight!.toStringAsFixed(1)} kg',  icon: Icons.gps_fixed),
+    ];
+
+    return Row(
+      children: items
+          .map((item) => Expanded(
+                child: Card(
+                  margin: const EdgeInsets.only(right: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 0,
+                  color: const Color(0xFFF3EEFF),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                    child: Column(
+                      children: [
+                        Icon(item.icon, size: 18, color: kPrimary),
+                        const SizedBox(height: 4),
+                        Text(item.label,
+                            style: TextStyle(fontSize: 11, color: Colors.grey[600], fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 2),
+                        Text(item.value,
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: kPrimary)),
+                      ],
+                    ),
+                  ),
+                ),
+              ))
+          .toList(),
+    );
+  }
+}
+
+class _StatItem {
+  final String label;
+  final String value;
+  final IconData icon;
+  const _StatItem({required this.label, required this.value, required this.icon});
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ── Summary Card: "Has bajado X kg" ─────────────────────────────────────────
+// Tarjeta amarilla que resume el progreso total y cuánto falta para la meta.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SummaryCard extends StatelessWidget {
+  final double initialWeight;
+  final double currentWeight;
+  final double goalWeight;
+
+  const _SummaryCard({
+    required this.initialWeight,
+    required this.currentWeight,
+    required this.goalWeight,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final lost = initialWeight - currentWeight;
+    final toGoal = currentWeight - goalWeight;
+    final reachedGoal = goalWeight > 0 && toGoal <= 0;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFDE7),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            reachedGoal ? Icons.emoji_events : (lost > 0 ? Icons.trending_down : Icons.trending_up),
+            color: kPrimary,
+            size: 26,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  reachedGoal
+                      ? '¡Meta alcanzada!'
+                      : lost > 0
+                          ? 'Has bajado ${lost.toStringAsFixed(1)} kg'
+                          : 'Inicio en ${initialWeight.toStringAsFixed(1)} kg',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w700, color: kPrimary),
+                ),
+                if (!reachedGoal && goalWeight > 0)
+                  Text(
+                    'Faltan ${toGoal.toStringAsFixed(1)} kg para tu meta de ${goalWeight.toStringAsFixed(0)} kg',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                  )
+                else if (reachedGoal)
+                  Text(
+                    '¡Excelente trabajo, sigue así!',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ── Achievements Grid ────────────────────────────────────────────────────────
+// Grid 2×N de tarjetas de logros. Las desbloqueadas tienen fondo lila,
+// las bloqueadas están atenuadas con un icono de candado.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _AchievementsGrid extends StatelessWidget {
+  final List<Achievement> achievements;
+
+  const _AchievementsGrid({required this.achievements});
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 1.2,
+      ),
+      itemCount: achievements.length,
+      itemBuilder: (context, idx) {
+        final a = achievements[idx];
+        return Container(
+          decoration: BoxDecoration(
+            color: a.unlocked ? const Color(0xFFEDE7FF) : const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: a.unlocked ? const Color(0xFFD8B4FE) : const Color(0xFFE5E7EB),
+            ),
+          ),
+          child: Opacity(
+            opacity: a.unlocked ? 1.0 : 0.55,
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(a.emoji, style: const TextStyle(fontSize: 30)),
+                  const SizedBox(height: 4),
+                  Text(
+                    a.name,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: a.unlocked ? kPrimary : Colors.grey[600],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    a.desc,
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (!a.unlocked) ...[
+                    const SizedBox(height: 4),
+                    const Icon(Icons.lock_outline, size: 14, color: Colors.grey),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ── Suggestions Row ──────────────────────────────────────────────────────────
+// Fila de 2 tarjetas (lila + amarilla) con sugerencias del día personalizadas.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SuggestionsRow extends StatelessWidget {
+  final List<Suggestion> suggestions;
+
+  const _SuggestionsRow({required this.suggestions});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: suggestions.map((s) {
+        final bg = s.isYellow ? const Color(0xFFFFFDE7) : const Color(0xFFF3EEFF);
+        final border = s.isYellow ? const Color(0xFFF5F3C6) : const Color(0xFFE9D5FF);
+        final isLast = s == suggestions.last;
+        return Expanded(
+          child: Container(
+            margin: EdgeInsets.only(right: isLast ? 0 : 10),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: border),
+            ),
+            child: Column(
+              children: [
+                Text(s.emoji, style: const TextStyle(fontSize: 28)),
+                const SizedBox(height: 6),
+                Text(
+                  s.title,
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w700, color: kPrimary),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  s.desc,
+                  style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }
