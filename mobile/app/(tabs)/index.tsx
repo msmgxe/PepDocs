@@ -168,7 +168,7 @@ export default function HomeScreen() {
       </View>
 
       {/* Header */}
-      <View style={[styles.header, { borderBottomColor: theme.border }]}>
+      <View style={[styles.header, { borderBottomColor: theme.border, backgroundColor: theme.background }]}>
         <TouchableOpacity onPress={() => setDrawerOpen(true)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
           <MaterialCommunityIcons name="menu" size={26} color={theme.lilacDark} />
         </TouchableOpacity>
@@ -182,7 +182,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Profile Card */}
-        <View style={styles.profileCard}>
+        <View style={[styles.profileCard, { backgroundColor: theme.lilacDark }]}>
           <View style={styles.profileAvatar}>
             <MaterialCommunityIcons name="account" size={36} color={theme.lilacDark} />
           </View>
@@ -207,19 +207,19 @@ export default function HomeScreen() {
 
         {/* Mini Cards */}
         <View style={styles.miniCards}>
-          <View style={[styles.miniCard, { borderColor: theme.lilacLight }]}>
+          <View style={[styles.miniCard, { borderColor: theme.lilacLight, backgroundColor: theme.lilacPale }]}>
             <MaterialCommunityIcons name="bullseye-arrow" size={24} color={theme.lilacDark} />
             <Text style={[styles.miniCardLabel, { color: theme.icon }]}>META</Text>
             <Text style={[styles.miniCardValue, { color: theme.lilacDark }]}>
               {profile?.goal_weight_kg ? `${profile.goal_weight_kg} kg` : '—'}
             </Text>
           </View>
-          <View style={[styles.miniCard, { borderColor: theme.lilacLight }]}>
+          <View style={[styles.miniCard, { borderColor: theme.lilacLight, backgroundColor: theme.lilacPale }]}>
             <MaterialCommunityIcons name="trending-down" size={24} color={theme.lilacDark} />
             <Text style={[styles.miniCardLabel, { color: theme.icon }]}>PERDIDO</Text>
             <Text style={[styles.miniCardValue, { color: theme.lilacDark }]}>{lostWeight} kg</Text>
           </View>
-          <View style={[styles.miniCard, { borderColor: theme.lilacLight }]}>
+          <View style={[styles.miniCard, { borderColor: theme.lilacLight, backgroundColor: theme.lilacPale }]}>
             <MaterialCommunityIcons name="calendar-week" size={24} color={theme.lilacDark} />
             <Text style={[styles.miniCardLabel, { color: theme.icon }]}>SEMANAS</Text>
             <Text style={[styles.miniCardValue, { color: theme.lilacDark }]}>{weeksActive}</Text>
@@ -425,7 +425,6 @@ const styles = StyleSheet.create({
     padding: 16,
     flexDirection: 'row',
     gap: 12,
-    backgroundColor: '#7B2D8B',
   },
   profileAvatar: {
     width: 56,
@@ -455,7 +454,6 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     alignItems: 'center',
-    backgroundColor: '#F7F0FC',
     borderWidth: 1,
   },
   miniCardIcon: { fontSize: 22, marginBottom: 4 },

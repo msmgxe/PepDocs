@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-const Color kPrimary = Color(0xFF7B2D8B);
-const Color kAccent = Color(0xFFF5C518);
-const Color kBackground = Color(0xFFF8F4FF);
-const Color kSurface = Colors.white;
-const Color kError = Color(0xFFB00020);
+const Color kPrimary    = Color(0xFF1B4FA8); // Pep blue (logo)
+const Color kAccent     = Color(0xFFF5C518); // yellow accent
+const Color kBackground = Color(0xFFF0F6FF); // very light blue
+const Color kSurface    = Colors.white;
+const Color kError      = Color(0xFFB00020);
 
 ThemeData buildAppTheme() {
   final colorScheme = ColorScheme.fromSeed(

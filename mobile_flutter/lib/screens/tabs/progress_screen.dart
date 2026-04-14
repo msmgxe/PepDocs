@@ -1,6 +1,7 @@
+import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
@@ -100,6 +101,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final bmi = (currentWeight != null && height != null && height > 0)
         ? currentWeight / ((height / 100) * (height / 100))
         : null;
+    final bmiCategory = bmi != null ? _bmiCategory(bmi) : null;
+    final bmiColor = bmi != null ? _bmiColor(bmi) : null;
     final totalLost = (currentWeight != null && firstWeight != null)
         ? firstWeight - currentWeight
         : null;
@@ -143,8 +146,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
                       children: [
                         Expanded(
                           child: _MiniCard(
-                            label: 'Peso actual',
-                            value: '${currentWeight.toStringAsFixed(1)} kg',
+                            label: 'Peso inicial',
+                            value: '${(firstWeight ?? currentWeight).toStringAsFixed(1)} kg',
                             color: kPrimary,
                           ),
                         ),
@@ -174,6 +177,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
                         ],
                       ],
                     ),
+
+                  if (bmi != null) ...[
+                    const SizedBox(height: 16),
+                    _BmiGaugeCard(
+                      bmi: bmi,
+                      category: bmiCategory,
+                      categoryColor: bmiColor,
+                    ),
+                  ],
 
                   const SizedBox(height: 24),
 
@@ -516,16 +528,30 @@ class _BodyCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ── Silhouette SVG ───────────────────────────────────────────────
+            // ── Figure photo ─────────────────────────────────────────────────
             Column(
               children: [
-                SvgPicture.asset(
-                  isFemale
-                      ? 'assets/images/silhouette_female.svg'
-                      : 'assets/images/silhouette_male.svg',
-                  width: 90,
-                  height: 160,
-                  fit: BoxFit.contain,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: 90,
+                    height: 160,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: isFemale
+                            ? const [Color(0xFFF3E5F5), Color(0xFFCE93D8)]
+                            : const [Color(0xFFE3F2FD), Color(0xFF90CAF9)],
+                      ),
+                    ),
+                    child: Image.asset(
+                      isFemale
+                          ? 'assets/images/figure_female.png'
+                          : 'assets/images/figure_male.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 4),
                 if (sex != null)
@@ -655,6 +681,200 @@ class _MiniCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ─── BMI Gauge card ───────────────────────────────────────────────────────────
+
+class _BmiGaugeCard extends StatelessWidget {
+  final double bmi;
+  final String? category;
+  final Color? categoryColor;
+
+  const _BmiGaugeCard({
+    required this.bmi,
+    this.category,
+    this.categoryColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                const Text(
+                  'Índice de Masa Corporal (IMC)',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                if (category != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: (categoryColor ?? Colors.grey)
+                          .withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      category!,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: categoryColor ?? Colors.grey,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            SizedBox(
+              height: 150,
+              width: double.infinity,
+              child: CustomPaint(painter: _BmiGaugePainter(bmi: bmi)),
+            ),
+            Text(
+              'Rango Saludable: 18.5 – 24.9',
+              style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+            ),
+            const SizedBox(height: 8),
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _LegendDot(color: Color(0xFF7B1FA2), label: 'Bajo peso'),
+                SizedBox(width: 10),
+                _LegendDot(color: Color(0xFF4CAF50), label: 'Normal'),
+                SizedBox(width: 10),
+                _LegendDot(color: Color(0xFFFF9800), label: 'Sobrepeso'),
+                SizedBox(width: 10),
+                _LegendDot(color: Color(0xFFF44336), label: 'Obesidad'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BmiGaugePainter extends CustomPainter {
+  final double bmi;
+
+  static const _min = 15.0;
+  static const _max = 40.0;
+
+  const _BmiGaugePainter({required this.bmi});
+
+  // _min → π (9 o'clock), _max → 2π (3 o'clock), through top (3π/2)
+  double _toAngle(double val) =>
+      math.pi +
+      (val.clamp(_min, _max) - _min) / (_max - _min) * math.pi;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height * 0.86;
+    final center = Offset(cx, cy);
+    final r = (size.width * 0.38).clamp(80.0, 130.0);
+    const sw = 18.0;
+
+    final rect = Rect.fromCircle(center: center, radius: r);
+
+    const zones = [
+      (15.0, 18.5, Color(0xFF7B1FA2)),
+      (18.5, 25.0, Color(0xFF4CAF50)),
+      (25.0, 30.0, Color(0xFFFF9800)),
+      (30.0, 40.0, Color(0xFFF44336)),
+    ];
+
+    final arcPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = sw
+      ..strokeCap = StrokeCap.butt;
+
+    for (final z in zones) {
+      arcPaint.color = z.$3;
+      canvas.drawArc(
+          rect, _toAngle(z.$1), _toAngle(z.$2) - _toAngle(z.$1), false,
+          arcPaint);
+    }
+
+    // White dividers between zones
+    final divPaint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 3.0;
+    for (final v in [18.5, 25.0, 30.0]) {
+      final a = _toAngle(v);
+      canvas.drawLine(
+        Offset(cx + (r - sw / 2 - 1) * math.cos(a),
+            cy + (r - sw / 2 - 1) * math.sin(a)),
+        Offset(cx + (r + sw / 2 + 1) * math.cos(a),
+            cy + (r + sw / 2 + 1) * math.sin(a)),
+        divPaint,
+      );
+    }
+
+    // BMI value text
+    final bmiTp = TextPainter(
+      text: TextSpan(
+        text: bmi.toStringAsFixed(1),
+        style: const TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF212121),
+        ),
+      ),
+      textDirection: ui.TextDirection.ltr,
+    )..layout();
+    bmiTp.paint(
+      canvas,
+      Offset(cx - bmiTp.width / 2, cy - r * 0.48 - bmiTp.height / 2),
+    );
+
+    // Needle
+    final na = _toAngle(bmi);
+    canvas.drawLine(
+      center,
+      Offset(cx + (r - sw / 2 - 4) * math.cos(na),
+          cy + (r - sw / 2 - 4) * math.sin(na)),
+      Paint()
+        ..color = Colors.grey.shade800
+        ..strokeWidth = 3.0
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // Center hub
+    canvas.drawCircle(center, 7, Paint()..color = Colors.grey.shade800);
+    canvas.drawCircle(center, 4, Paint()..color = Colors.white);
+  }
+
+  @override
+  bool shouldRepaint(_BmiGaugePainter o) => o.bmi != bmi;
+}
+
+class _LegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+
+  const _LegendDot({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+      ],
     );
   }
 }

@@ -15,13 +15,13 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 
-const PURPLE = '#7B2D8B';
-const PURPLE_MID = '#C4A2DC';
-const PURPLE_PALE = '#F7F0FC';
+const PURPLE = '#1B4FA8';
+const PURPLE_MID = '#2D7DD2';
+const PURPLE_PALE = '#EFF6FF';
 const YELLOW = '#FFD700';
 const DARK = '#1A1A1A';
 const GRAY = '#6B7280';
-const BG = '#F4EDF8';
+const BG = '#EFF6FF';
 
 const MEDICATIONS = ['Tirzepatide', 'Retatrutide', 'Lipo-C', 'NAD+', 'BPC-157'];
 
@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
   // Toggle
   toggle: {
     flexDirection: 'row',
-    backgroundColor: '#EDE4F7',
+    backgroundColor: '#DBEAFE',
     borderRadius: 14,
     padding: 4,
     gap: 4,
@@ -662,7 +662,7 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
     gap: 14,
-    shadowColor: '#7B2D8B',
+    shadowColor: '#1B4FA8',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 20,

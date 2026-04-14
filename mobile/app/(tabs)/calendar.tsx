@@ -71,7 +71,7 @@ async function getOrCreatePepCalendar(): Promise<string | null> {
 
     const calId = await Calendar.createCalendarAsync({
       title: 'Pep Education',
-      color: '#7B2D8B',
+      color: '#1B4FA8',
       entityType: Calendar.EntityTypes.EVENT,
       source: defaultSource as any,
       name: 'pep_education',
@@ -396,7 +396,7 @@ export default function CalendarScreen() {
                 key={item.id}
                 style={[styles.appointmentItem, { backgroundColor: theme.lilacPale, borderColor: theme.lilacLight }]}
               >
-                <MaterialCommunityIcons name="bell-outline" size={20} color="#7B2D8B" />
+                <MaterialCommunityIcons name="bell-outline" size={20} color={theme.lilacDark} />
                 <View style={styles.appointmentInfo}>
                   <Text style={[styles.appointmentDate, { color: theme.icon }]}>
                     {new Date(toDateStr(item.event_date) + 'T12:00:00').toLocaleDateString('es-ES', {
@@ -588,7 +588,7 @@ const styles = StyleSheet.create({
     position: 'absolute', bottom: 84, right: 16,
     width: 60, height: 60, borderRadius: 30,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#7B2D8B', shadowOffset: { width: 0, height: 4 },
+    shadowColor: '#1B4FA8', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
   },
 

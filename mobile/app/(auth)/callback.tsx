@@ -3,8 +3,8 @@ import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 
-const PURPLE = '#7B2D8B';
-const BG = '#F4EDF8';
+const PURPLE = '#1B4FA8';
+const BG = '#EFF6FF';
 
 export default function AuthCallback() {
   const router = useRouter();

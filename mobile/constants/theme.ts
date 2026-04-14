@@ -5,8 +5,8 @@
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#7B2D8B';
-const tintColorDark = '#FFD700';
+const tintColorLight = '#1B4FA8';
+const tintColorDark = '#93C5FD';
 
 export const Colors = {
   light: {
@@ -16,10 +16,10 @@ export const Colors = {
     icon: '#6B7280',
     tabIconDefault: '#6B7280',
     tabIconSelected: tintColorLight,
-    lilacDark: '#7B2D8B',
-    lilacMedium: '#C4A2DC',
-    lilacLight: '#EDE4F7',
-    lilacPale: '#F7F0FC',
+    lilacDark: '#1B4FA8',
+    lilacMedium: '#2D7DD2',
+    lilacLight: '#DBEAFE',
+    lilacPale: '#EFF6FF',
     yellow: '#FFD700',
     yellowSoft: '#FFF9C4',
     border: '#E5E7EB',
@@ -28,18 +28,18 @@ export const Colors = {
   },
   dark: {
     text: '#ECEDEE',
-    background: '#151718',
+    background: '#0F172A',
     tint: tintColorDark,
     icon: '#9BA1A6',
     tabIconDefault: '#9BA1A6',
     tabIconSelected: tintColorDark,
-    lilacDark: '#C4A2DC',
-    lilacMedium: '#7B2D8B',
-    lilacLight: '#1A1A1A',
-    lilacPale: '#2A2A2A',
+    lilacDark: '#93C5FD',
+    lilacMedium: '#2D7DD2',
+    lilacLight: '#1E3A5F',
+    lilacPale: '#172554',
     yellow: '#FFD700',
-    yellowSoft: '#444400',
-    border: '#333333',
+    yellowSoft: '#1C1800',
+    border: '#1E293B',
     green: '#10B981',
     red: '#EF4444',
   },
