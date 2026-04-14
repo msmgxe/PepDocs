@@ -33,12 +33,13 @@ mobile/
 │   │   ├── _layout.tsx          # Stack navigator onboarding
 │   │   └── index.tsx            # Wizard 6 pasos (teléfono, peso, altura, edad, sexo, meds)
 │   └── (tabs)/
-│       ├── _layout.tsx          # Bottom tab navigator (5 tabs, support oculto)
-│       ├── index.tsx            # Home: bienvenida, próxima cita, tips, notas
+│       ├── _layout.tsx          # Bottom tab navigator (4 tabs visibles, profile y support ocultos)
+│       ├── index.tsx            # Home: bienvenida, próxima cita, tips, notas + drawer
 │       ├── weight.tsx           # Registro de peso + gráfico SVG + zoom
 │       ├── progress.tsx         # LineChart progreso + achievement badges
 │       ├── calendar.tsx         # Calendario mensual + crear/ver eventos
-│       └── support.tsx          # Centro de soporte + contacto médico
+│       ├── profile.tsx          # Mi Perfil: nombre, sexo, DOB, estatura (cm/ft), peso (kg/lbs)
+│       └── support.tsx          # Centro de soporte + contacto médico (href: null)
 ├── context/
 │   └── AuthContext.tsx          # Sesión, perfil, hasProfile, routing
 ├── lib/
@@ -94,7 +95,8 @@ App Launch
 
 (tabs)/
     ├── index (Home) ←→ weight ←→ progress ←→ calendar
-    └── support (href: null — accesible desde Home, no en nav)
+    ├── profile (href: null — accesible desde el drawer de Home)
+    └── support (href: null — accesible desde Help, no en nav)
 ```
 
 ---
@@ -284,10 +286,28 @@ npx eas update --branch production --message "Fix: descripción del cambio"
 | Calendario de citas | (tabs)/calendar | ✅ |
 | Crear eventos | (tabs)/calendar | ✅ |
 | Contacto médico (WhatsApp) | (tabs)/support | ✅ |
+| Mi Perfil (editar datos) | (tabs)/profile | ✅ (toggle kg/lbs y cm/ft) |
 | FAQ | (tabs)/support | ⏳ Placeholder |
 | Dark mode | Todas | ✅ |
 | Push notifications | - | ❌ No implementado |
 | Biometría/Face ID | - | ❌ No implementado |
+
+---
+
+## Seguridad — Medidas Aplicadas (Abril 2026)
+
+| Área | Medida |
+|------|--------|
+| Mensajes de error auth | Mensajes genéricos en login/register/verify — no expone `error.message` de Supabase |
+| Race condition loading | `setLoading(false)` en bloque `finally` en login y register |
+| Validación email deep link | `verify.tsx` valida formato de email antes de llamar `verifyOtp()` |
+| Validación de rangos onboarding | Peso: 20–400 kg, Altura: 50–280 cm, Edad: 16–120 años |
+| Formato de teléfono | Regex `/^\+?[\d\s\-().]{7,20}$/` en onboarding paso 1 |
+| Guard final onboarding | `completeOnboarding()` re-valida rangos antes del INSERT en Supabase |
+| Errores de DB en weight | Mensajes genéricos en insert, delete y update de measurements |
+| Límite de campo nombre | `maxLength={100}` en TextInput del nombre en Mi Perfil |
+| Select explícito en Home | `index.tsx` selecciona solo las columnas necesarias (sin `select *`) |
+| Rangos peso en weight.tsx | Validación 1–600 kg antes del insert de measurements |
 
 ---
 
