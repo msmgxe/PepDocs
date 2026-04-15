@@ -159,14 +159,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // Personal info row: height, sex, age
                   if (height != null || sex != null || age != null)
-                    Row(
+                    ListenableBuilder(
+                      listenable: UnitsService.instance,
+                      builder: (context, _) => Row(
                       children: [
                         if (height != null)
                           Expanded(
                             child: _InfoChip(
                               icon: Icons.height,
                               label: 'Estatura',
-                              value: '${height.toStringAsFixed(0)} cm',
+                              value: UnitsService.instance.formatHeight(height),
                             ),
                           ),
                         if (height != null && (sex != null || age != null))
@@ -190,6 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                       ],
+                    ),
                     ),
 
                   if (height != null || sex != null || age != null)
@@ -271,13 +274,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _StatCard(
-                          label: 'Peso objetivo',
-                          value: targetWeight != null
-                              ? '${targetWeight.toStringAsFixed(1)} kg'
-                              : '—',
-                          icon: Icons.flag_outlined,
-                          color: Colors.green,
+                        child: ListenableBuilder(
+                          listenable: UnitsService.instance,
+                          builder: (context, _) => _StatCard(
+                            label: 'Peso objetivo',
+                            value: targetWeight != null
+                                ? UnitsService.instance.formatWeight(targetWeight)
+                                : '—',
+                            icon: Icons.flag_outlined,
+                            color: Colors.green,
+                          ),
                         ),
                       ),
                     ],

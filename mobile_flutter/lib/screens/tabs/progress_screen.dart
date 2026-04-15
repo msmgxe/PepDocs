@@ -146,40 +146,43 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
                   // ── Summary mini-cards ────────────────────────────
                   if (currentWeight != null)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _MiniCard(
-                            label: 'Peso inicial',
-                            value: '${(firstWeight ?? currentWeight).toStringAsFixed(1)} kg',
-                            color: kPrimary,
-                          ),
-                        ),
-                        if (targetWeight != null) ...[
-                          const SizedBox(width: 12),
+                    ListenableBuilder(
+                      listenable: UnitsService.instance,
+                      builder: (context, _) => Row(
+                        children: [
                           Expanded(
                             child: _MiniCard(
-                              label: 'Meta',
-                              value: '${targetWeight.toStringAsFixed(1)} kg',
-                              color: Colors.green,
+                              label: 'Peso inicial',
+                              value: UnitsService.instance.formatWeight(firstWeight ?? currentWeight),
+                              color: kPrimary,
                             ),
                           ),
-                        ],
-                        if (firstWeight != null &&
-                            currentWeight != firstWeight) ...[
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _MiniCard(
-                              label: 'Diferencia',
-                              value:
-                                  '${(currentWeight - firstWeight) > 0 ? '+' : ''}${(currentWeight - firstWeight).toStringAsFixed(1)} kg',
-                              color: currentWeight < firstWeight
-                                  ? Colors.green
-                                  : Colors.orange,
+                          if (targetWeight != null) ...[
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _MiniCard(
+                                label: 'Meta',
+                                value: UnitsService.instance.formatWeight(targetWeight),
+                                color: Colors.green,
+                              ),
                             ),
-                          ),
+                          ],
+                          if (firstWeight != null &&
+                              currentWeight != firstWeight) ...[
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _MiniCard(
+                                label: 'Diferencia',
+                                value:
+                                    '${(currentWeight - firstWeight) > 0 ? '+' : ''}${UnitsService.instance.formatWeight((currentWeight - firstWeight).abs())}',
+                                color: currentWeight < firstWeight
+                                    ? Colors.green
+                                    : Colors.orange,
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
 
                   if (bmi != null) ...[
@@ -359,7 +362,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                               touchedSpots
                                                   .map((s) =>
                                                       LineTooltipItem(
-                                                        '${s.y.toStringAsFixed(1)} kg',
+                                                        UnitsService.instance.formatWeight(s.y),
                                                         const TextStyle(
                                                           color: Colors.white,
                                                           fontWeight:
@@ -424,7 +427,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                         .withValues(alpha: 0.6)),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'Meta: ${targetWeight.toStringAsFixed(1)} kg',
+                                  'Meta: ${UnitsService.instance.formatWeight(targetWeight)}',
                                   style: TextStyle(
                                       fontSize: 12,
                                       color: Colors.grey[600]),

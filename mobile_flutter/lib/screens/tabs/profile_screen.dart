@@ -262,20 +262,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 20),
 
                     // ── Estatura ─────────────────────────────────
-                    TextFormField(
-                      controller: _heightController,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      textInputAction: TextInputAction.next,
-                      decoration: InputDecoration(
-                        labelText: UnitsService.instance.isFt ? 'Estatura (ft decimales)' : 'Estatura (cm)',
-                        prefixIcon: Icon(Icons.height),
+                    ListenableBuilder(
+                      listenable: UnitsService.instance,
+                      builder: (context, _) => TextFormField(
+                        controller: _heightController,
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          labelText: UnitsService.instance.isFt ? 'Estatura (ft decimales)' : 'Estatura (cm)',
+                          prefixIcon: const Icon(Icons.height),
+                        ),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) return 'Ingresa tu estatura';
+                          if (double.tryParse(v) == null) return 'Número inválido';
+                          return null;
+                        },
                       ),
-                      validator: (v) {
-                        if (v == null || v.isEmpty) return 'Ingresa tu estatura';
-                        if (double.tryParse(v) == null) return 'Número inválido';
-                        return null;
-                      },
                     ),
                     const SizedBox(height: 20),
 
