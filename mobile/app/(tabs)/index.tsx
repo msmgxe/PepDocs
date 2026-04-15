@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
+import { useUnits, formatWeight, formatHeight } from '@/context/UnitsContext';
 import { useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/theme';
@@ -37,6 +38,7 @@ export default function HomeScreen() {
   const [notes, setNotes] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
   const router = useRouter();
+  const { weightUnit, heightUnit } = useUnits();
   const colorScheme = useColorScheme() ?? 'light';
   const theme = Colors[colorScheme];
 
@@ -212,13 +214,13 @@ export default function HomeScreen() {
             <MaterialCommunityIcons name="bullseye-arrow" size={24} color={theme.lilacDark} />
             <Text style={[styles.miniCardLabel, { color: theme.icon }]}>META</Text>
             <Text style={[styles.miniCardValue, { color: theme.lilacDark }]}>
-              {profile?.goal_weight_kg ? `${profile.goal_weight_kg} kg` : '—'}
+              {profile?.goal_weight_kg ? formatWeight(profile.goal_weight_kg, weightUnit) : '—'}
             </Text>
           </View>
           <View style={[styles.miniCard, { borderColor: theme.lilacLight, backgroundColor: theme.lilacPale }]}>
             <MaterialCommunityIcons name="trending-down" size={24} color={theme.lilacDark} />
             <Text style={[styles.miniCardLabel, { color: theme.icon }]}>PERDIDO</Text>
-            <Text style={[styles.miniCardValue, { color: theme.lilacDark }]}>{lostWeight} kg</Text>
+            <Text style={[styles.miniCardValue, { color: theme.lilacDark }]}>{formatWeight(lostWeight, weightUnit)}</Text>
           </View>
           <View style={[styles.miniCard, { borderColor: theme.lilacLight, backgroundColor: theme.lilacPale }]}>
             <MaterialCommunityIcons name="calendar-week" size={24} color={theme.lilacDark} />
@@ -279,19 +281,19 @@ export default function HomeScreen() {
               {[
                 {
                   label: 'Peso inicial',
-                  value: profile?.initial_weight_kg ? `${profile.initial_weight_kg} kg` : '—',
+                  value: profile?.initial_weight_kg ? formatWeight(profile.initial_weight_kg, weightUnit) : '—',
                 },
                 {
                   label: 'Peso actual',
-                  value: profile?.current_weight_kg ? `${profile.current_weight_kg} kg` : '—',
+                  value: profile?.current_weight_kg ? formatWeight(profile.current_weight_kg, weightUnit) : '—',
                 },
                 {
                   label: 'Meta',
-                  value: profile?.goal_weight_kg ? `${profile.goal_weight_kg} kg` : '—',
+                  value: profile?.goal_weight_kg ? formatWeight(profile.goal_weight_kg, weightUnit) : '—',
                 },
                 {
                   label: 'Altura',
-                  value: profile?.height_cm ? `${profile.height_cm} cm` : '—',
+                  value: profile?.height_cm ? formatHeight(profile.height_cm, heightUnit) : '—',
                 },
                 { label: 'Edad', value: profile?.age ? `${profile.age} años` : '—' },
                 { label: 'Sexo', value: profile?.sex || '—' },

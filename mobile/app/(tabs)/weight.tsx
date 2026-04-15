@@ -21,6 +21,7 @@ import { Svg, Polyline, Circle, Line, Text as SvgText, Defs, ClipPath, Rect, Pol
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 import { useAuth } from '@/context/AuthContext';
+import { useUnits } from '@/context/UnitsContext';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -215,8 +216,14 @@ export default function WeightScreen() {
 
   const inputRef = useRef<TextInput>(null);
   const { user } = useAuth();
+  const { weightUnit, setWeightUnit } = useUnits();
   const colorScheme = useColorScheme() ?? 'light';
   const theme = Colors[colorScheme];
+
+  // Sync local unit state from global context (e.g. after AsyncStorage loads or profile change)
+  useEffect(() => {
+    setUnit(weightUnit === 'lbs' ? 'lb' : 'kg');
+  }, [weightUnit]);
 
   // Multi-select state
   const [selectMode, setSelectMode] = useState(false);
@@ -270,6 +277,7 @@ export default function WeightScreen() {
       }
     }
     setUnit(newUnit);
+    setWeightUnit(newUnit === 'lb' ? 'lbs' : 'kg'); // persiste en contexto global
   }
 
   const weightKg = (() => {
@@ -468,8 +476,8 @@ export default function WeightScreen() {
 
   function openEdit(item: any) {
     setEditItem(item);
-    setEditWeight(String(item.weight_kg));
-    setEditUnit('kg');
+    setEditWeight(unit === 'lb' ? fmt(kgToLbs(parseFloat(String(item.weight_kg)))) : String(item.weight_kg));
+    setEditUnit(unit);
     setEditDate(new Date(item.measurement_date + 'T12:00:00'));
     setEditNote(item.notes === 'Registrado desde la app móvil' ? '' : (item.notes ?? ''));
     setSavingEdit(false);
@@ -607,7 +615,9 @@ export default function WeightScreen() {
         </View>
         <Text style={[styles.progressText, { color: theme.icon }]}>
           {profile?.current_weight_kg && profile?.goal_weight_kg
-            ? `${Math.max(0, profile.current_weight_kg - profile.goal_weight_kg).toFixed(1)} kg para llegar a ${profile.goal_weight_kg} kg`
+            ? unit === 'lb'
+              ? `${Math.max(0, kgToLbs(profile.current_weight_kg) - kgToLbs(profile.goal_weight_kg)).toFixed(1)} lb para llegar a ${kgToLbs(profile.goal_weight_kg)} lb`
+              : `${Math.max(0, profile.current_weight_kg - profile.goal_weight_kg).toFixed(1)} kg para llegar a ${profile.goal_weight_kg} kg`
             : 'Registra tu peso para ver el progreso'}
         </Text>
       </View>
@@ -740,7 +750,9 @@ export default function WeightScreen() {
                   </View>
                 </View>
                 <View style={styles.historyRight}>
-                  <Text style={[styles.historyWeight, { color: theme.lilacDark }]}>{item.weight_kg} kg</Text>
+                  <Text style={[styles.historyWeight, { color: theme.lilacDark }]}>
+                    {unit === 'lb' ? `${kgToLbs(parseFloat(item.weight_kg))} lb` : `${item.weight_kg} kg`}
+                  </Text>
                   {!selectMode && (
                     <>
                       <TouchableOpacity

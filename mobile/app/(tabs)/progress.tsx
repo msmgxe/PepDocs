@@ -9,6 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
+import { useUnits, formatWeight } from '@/context/UnitsContext';
 import { supabase } from '@/lib/supabase';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -211,6 +212,7 @@ function ProgressChart({ measurements, goalWeight, theme }: {
 
 export default function ProgressScreen() {
   const { user } = useAuth();
+  const { weightUnit } = useUnits();
   const [profile, setProfile] = useState<any>(null);
   const [measurements, setMeasurements] = useState<any[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -272,9 +274,9 @@ export default function ProgressScreen() {
       {/* Stats Row */}
       <View style={styles.statsRow}>
         {([
-          { icon: 'flag-checkered' as AchievementIcon, label: 'INICIO', value: initial ? `${initial} kg` : '—' },
-          { icon: 'map-marker'     as AchievementIcon, label: 'HOY',    value: current ? `${current} kg` : '—' },
-          { icon: 'bullseye-arrow' as AchievementIcon, label: 'META',   value: goal    ? `${goal} kg`    : '—' },
+          { icon: 'flag-checkered' as AchievementIcon, label: 'INICIO', value: initial ? formatWeight(initial, weightUnit) : '—' },
+          { icon: 'map-marker'     as AchievementIcon, label: 'HOY',    value: current ? formatWeight(current, weightUnit) : '—' },
+          { icon: 'bullseye-arrow' as AchievementIcon, label: 'META',   value: goal    ? formatWeight(goal, weightUnit)    : '—' },
         ]).map(s => (
           <View key={s.label} style={[styles.statCard, { backgroundColor: theme.lilacPale, borderColor: theme.lilacLight }]}>
             <MaterialCommunityIcons name={s.icon} size={18} color={theme.lilacDark} />
@@ -293,10 +295,10 @@ export default function ProgressScreen() {
           />
           <View style={{ flex: 1 }}>
             <Text style={[styles.summaryTitle, { color: theme.lilacDark }]}>
-              {goalDiff <= 0 ? '¡Meta alcanzada!' : current < initial ? `Has bajado ${(initial - current).toFixed(1)} kg` : `Inicio en ${initial} kg`}
+              {goalDiff <= 0 ? '¡Meta alcanzada!' : current < initial ? `Has bajado ${formatWeight(initial - current, weightUnit)}` : `Inicio en ${formatWeight(initial, weightUnit)}`}
             </Text>
             <Text style={[styles.summarySubtitle, { color: theme.text }]}>
-              {goalDiff > 0 ? `Faltan ${goalDiff.toFixed(1)} kg para tu meta de ${goal} kg` : '¡Excelente trabajo, sigue así!'}
+              {goalDiff > 0 ? `Faltan ${formatWeight(goalDiff, weightUnit)} para tu meta de ${formatWeight(goal, weightUnit)}` : '¡Excelente trabajo, sigue así!'}
             </Text>
           </View>
         </View>

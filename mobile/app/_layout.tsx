@@ -1,6 +1,7 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { UnitsProvider } from '@/context/UnitsContext';
 import { ThemeProvider, DarkTheme, DefaultTheme } from '@react-navigation/native';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { StatusBar } from 'expo-status-bar';
@@ -61,12 +62,14 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AuthProvider>
-          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-            <RootLayoutNav fontsReady={fontsReady} />
-            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-          </ThemeProvider>
-        </AuthProvider>
+        <UnitsProvider>
+          <AuthProvider>
+            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+              <RootLayoutNav fontsReady={fontsReady} />
+              <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+            </ThemeProvider>
+          </AuthProvider>
+        </UnitsProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

@@ -23,6 +23,7 @@ import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
+import { useUnits } from '@/context/UnitsContext';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -67,16 +68,17 @@ export default function ProfileScreen() {
   const [dob, setDob] = useState<Date>(new Date(1990, 0, 1));
   const [showDobPicker, setShowDobPicker] = useState(false);
 
+  // — Unidades (global, persistido en AsyncStorage) —
+  const { weightUnit, setWeightUnit, heightUnit, setHeightUnit } = useUnits();
+
   // — Estatura —
   const [heightCm, setHeightCm] = useState('');          // texto en cm
   const [heightFt, setHeightFt] = useState('');          // texto en pies (ft)
   const [heightIn, setHeightIn] = useState('');          // texto en pulgadas (in)
-  const [heightUnit, setHeightUnit] = useState<'cm' | 'ft'>('cm');
 
   // — Peso —
   const [currentWeight, setCurrentWeight] = useState(''); // texto en unidad activa
   const [goalWeight, setGoalWeight] = useState('');       // texto en unidad activa
-  const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg');
 
   // — UI —
   const [loading, setLoading] = useState(true);
@@ -106,12 +108,24 @@ export default function ProfileScreen() {
           setDob(new Date(approxYear, 0, 1));
         }
 
-        // Estatura inicial siempre en cm
-        if (data.height_cm) setHeightCm(String(data.height_cm));
+        // Estatura: mostrar según unidad activa
+        if (data.height_cm) {
+          if (heightUnit === 'ft') {
+            const { ft, inch } = cmToFtIn(data.height_cm);
+            setHeightFt(String(ft));
+            setHeightIn(String(inch));
+          } else {
+            setHeightCm(String(data.height_cm));
+          }
+        }
 
-        // Peso inicial en kg
-        if (data.current_weight_kg) setCurrentWeight(String(data.current_weight_kg));
-        if (data.goal_weight_kg) setGoalWeight(String(data.goal_weight_kg));
+        // Peso: mostrar según unidad activa
+        if (data.current_weight_kg) {
+          setCurrentWeight(weightUnit === 'lbs' ? String(kgToLbs(data.current_weight_kg)) : String(data.current_weight_kg));
+        }
+        if (data.goal_weight_kg) {
+          setGoalWeight(weightUnit === 'lbs' ? String(kgToLbs(data.goal_weight_kg)) : String(data.goal_weight_kg));
+        }
       }
 
       setLoading(false);
