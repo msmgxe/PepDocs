@@ -1110,7 +1110,7 @@ class _AchievementsGrid extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(a.emoji, style: const TextStyle(fontSize: 30)),
+                  Icon(a.icon, size: 30, color: a.unlocked ? a.iconColor : Colors.grey),
                   const SizedBox(height: 4),
                   Text(
                     a.name,
@@ -1171,7 +1171,7 @@ class _SuggestionsRow extends StatelessWidget {
             ),
             child: Column(
               children: [
-                Text(s.emoji, style: const TextStyle(fontSize: 28)),
+                Icon(s.icon, size: 28, color: kPrimary),
                 const SizedBox(height: 6),
                 Text(
                   s.title,
