@@ -4,15 +4,20 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'constants/theme.dart';
 import 'services/supabase_service.dart';
 import 'services/units_service.dart';
+import 'services/language_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'widgets/main_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize date formatting for all supported locales
   await initializeDateFormatting('es');
-  
+  await initializeDateFormatting('en');
+  await initializeDateFormatting('pt_BR');
+
   await UnitsService.instance.init();
+  await LanguageService.instance.load();
 
   await Supabase.initialize(
     url: supabaseUrl,
@@ -27,11 +32,15 @@ class PepApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Pep Education',
-      debugShowCheckedModeBanner: false,
-      theme: buildAppTheme(),
-      home: const AuthGate(),
+    // Rebuild the entire app when language changes so all strings update.
+    return ListenableBuilder(
+      listenable: LanguageService.instance,
+      builder: (context, _) => MaterialApp(
+        title: 'Pep Education',
+        debugShowCheckedModeBanner: false,
+        theme: buildAppTheme(),
+        home: const AuthGate(),
+      ),
     );
   }
 }

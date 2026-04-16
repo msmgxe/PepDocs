@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
 import '../../services/units_service.dart';
+import '../../services/language_service.dart';
 import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -72,10 +73,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _bmiCategory(double bmi) {
-    if (bmi < 18.5) return 'Bajo peso';
-    if (bmi < 25) return 'Peso normal';
-    if (bmi < 30) return 'Sobrepeso';
-    return 'Obesidad';
+    final l = LanguageService.instance;
+    if (bmi < 18.5) return l.tr('bmi_underweight');
+    if (bmi < 25) return l.tr('bmi_normal');
+    if (bmi < 30) return l.tr('bmi_overweight');
+    return l.tr('bmi_obesity');
   }
 
   Color _bmiColor(double bmi) {
@@ -101,10 +103,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final name = _profile?['full_name']?.toString() ?? 'Paciente';
+    final l = LanguageService.instance;
+    final name =
+        _profile?['full_name']?.toString() ?? l.tr('patient_default');
     final bmi = _bmi();
-    final currentWeight = (_latestMeasurement?['weight_kg'] as num?)?.toDouble() ??
-        (_profile?['current_weight_kg'] as num?)?.toDouble();
+    final currentWeight =
+        (_latestMeasurement?['weight_kg'] as num?)?.toDouble() ??
+            (_profile?['current_weight_kg'] as num?)?.toDouble();
     final targetWeight = (_profile?['goal_weight_kg'] as num?)?.toDouble();
     final height = (_profile?['height_cm'] as num?)?.toDouble();
     final sex = _profile?['sex']?.toString();
@@ -112,11 +117,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pep Education'),
+        title: Text(l.tr('app_name')),
         actions: [
           IconButton(
             icon: const Icon(Icons.person_outline),
-            tooltip: 'Mi perfil',
+            tooltip: l.tr('my_profile'),
             onPressed: () async {
               final updated = await Navigator.push<bool>(
                 context,
@@ -127,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesión',
+            tooltip: l.tr('logout'),
             onPressed: () async {
               await signOut();
             },
@@ -162,37 +167,43 @@ class _HomeScreenState extends State<HomeScreen> {
                     ListenableBuilder(
                       listenable: UnitsService.instance,
                       builder: (context, _) => Row(
-                      children: [
-                        if (height != null)
-                          Expanded(
-                            child: _InfoChip(
-                              icon: Icons.height,
-                              label: 'Estatura',
-                              value: UnitsService.instance.formatHeight(height),
+                        children: [
+                          if (height != null)
+                            Expanded(
+                              child: _InfoChip(
+                                icon: Icons.height,
+                                label: l.tr('info_height'),
+                                value: UnitsService.instance
+                                    .formatHeight(height),
+                              ),
                             ),
-                          ),
-                        if (height != null && (sex != null || age != null))
-                          const SizedBox(width: 8),
-                        if (sex != null)
-                          Expanded(
-                            child: _InfoChip(
-                              icon: sex == 'femenino' ? Icons.woman : Icons.man,
-                              label: 'Sexo',
-                              value: sex == 'femenino' ? 'Femenino' : 'Masculino',
+                          if (height != null && (sex != null || age != null))
+                            const SizedBox(width: 8),
+                          if (sex != null)
+                            Expanded(
+                              child: _InfoChip(
+                                icon: sex == 'femenino'
+                                    ? Icons.woman
+                                    : Icons.man,
+                                label: l.tr('info_sex'),
+                                value: sex == 'femenino'
+                                    ? l.tr('sex_female')
+                                    : l.tr('sex_male'),
+                              ),
                             ),
-                          ),
-                        if (sex != null && age != null)
-                          const SizedBox(width: 8),
-                        if (age != null)
-                          Expanded(
-                            child: _InfoChip(
-                              icon: Icons.cake_outlined,
-                              label: 'Edad',
-                              value: '$age años',
+                          if (sex != null && age != null)
+                            const SizedBox(width: 8),
+                          if (age != null)
+                            Expanded(
+                              child: _InfoChip(
+                                icon: Icons.cake_outlined,
+                                label: l.tr('info_age'),
+                                value: l.tr('years_suffix',
+                                    params: {'n': '$age'}),
+                              ),
                             ),
-                          ),
-                      ],
-                    ),
+                        ],
+                      ),
                     ),
 
                   if (height != null || sex != null || age != null)
@@ -212,9 +223,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                     color: kPrimary, size: 20),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Índice de Masa Corporal',
+                                  l.tr('home_bmi'),
                                   style: TextStyle(
-                                      fontSize: 14, color: Colors.grey[600]),
+                                      fontSize: 14,
+                                      color: Colors.grey[600]),
                                 ),
                               ],
                             ),
@@ -237,8 +249,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: _bmiColor(bmi).withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(20),
+                                      color: _bmiColor(bmi)
+                                          .withValues(alpha: 0.15),
+                                      borderRadius:
+                                          BorderRadius.circular(20),
                                     ),
                                     child: Text(
                                       _bmiCategory(bmi),
@@ -263,13 +277,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: _StatCard(
-                          label: 'Peso actual',
-                          value: currentWeight != null
-                              ? UnitsService.instance.formatWeight(currentWeight)
-                              : '—',
-                          icon: Icons.monitor_weight_outlined,
-                          color: kPrimary,
+                        child: ListenableBuilder(
+                          listenable: UnitsService.instance,
+                          builder: (context, _) => _StatCard(
+                            label: l.tr('home_current_weight'),
+                            value: currentWeight != null
+                                ? UnitsService.instance
+                                    .formatWeight(currentWeight)
+                                : '—',
+                            icon: Icons.monitor_weight_outlined,
+                            color: kPrimary,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -277,9 +295,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: ListenableBuilder(
                           listenable: UnitsService.instance,
                           builder: (context, _) => _StatCard(
-                            label: 'Peso objetivo',
+                            label: l.tr('home_target_weight'),
                             value: targetWeight != null
-                                ? UnitsService.instance.formatWeight(targetWeight)
+                                ? UnitsService.instance
+                                    .formatWeight(targetWeight)
                                 : '—',
                             icon: Icons.flag_outlined,
                             color: Colors.green,
@@ -304,7 +323,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   color: kPrimary, size: 20),
                               const SizedBox(width: 8),
                               Text(
-                                'Próxima cita',
+                                l.tr('home_next_appointment'),
                                 style: TextStyle(
                                     fontSize: 14, color: Colors.grey[600]),
                               ),
@@ -313,19 +332,23 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 12),
                           if (_nextEvent != null) ...[
                             Text(
-                              _nextEvent!['title']?.toString() ?? 'Cita',
+                              _nextEvent!['title']?.toString() ??
+                                  l.tr('home_default_appointment'),
                               style: const TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               _formatEventDate(
-                                  _nextEvent!['event_date']?.toString() ?? ''),
+                                  _nextEvent!['event_date']?.toString() ??
+                                      ''),
                               style: TextStyle(
                                   color: Colors.grey[600], fontSize: 14),
                             ),
                             if (_nextEvent!['notes'] != null &&
-                                _nextEvent!['notes'].toString().isNotEmpty) ...[
+                                _nextEvent!['notes']
+                                    .toString()
+                                    .isNotEmpty) ...[
                               const SizedBox(height: 4),
                               Text(
                                 _nextEvent!['notes'].toString(),
@@ -335,7 +358,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ] else
                             Text(
-                              'Sin citas programadas',
+                              l.tr('home_no_appointments'),
                               style: TextStyle(
                                   color: Colors.grey[500], fontSize: 15),
                             ),
@@ -350,17 +373,22 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _greeting() {
+    final l = LanguageService.instance;
     final h = DateTime.now().hour;
-    if (h < 12) return 'Buenos días,';
-    if (h < 18) return 'Buenas tardes,';
-    return 'Buenas noches,';
+    if (h < 12) return l.tr('home_greeting_morning');
+    if (h < 18) return l.tr('home_greeting_afternoon');
+    return l.tr('home_greeting_evening');
   }
 
   String _formatEventDate(String raw) {
     if (raw.isEmpty) return '';
     final date = DateTime.tryParse(raw.substring(0, 10));
     if (date == null) return raw;
-    return DateFormat('EEEE d \'de\' MMMM', 'es').format(date);
+    final locale = LanguageService.instance.dateLocale;
+    if (locale == 'en') {
+      return DateFormat('EEEE, MMMM d', 'en').format(date);
+    }
+    return DateFormat("EEEE d 'de' MMMM", locale).format(date);
   }
 }
 
@@ -390,8 +418,7 @@ class _InfoChip extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             value,
-            style: const TextStyle(
-                fontSize: 13, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
           ),
@@ -431,8 +458,7 @@ class _StatCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               value,
-              style: const TextStyle(
-                  fontSize: 22, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             Text(label,

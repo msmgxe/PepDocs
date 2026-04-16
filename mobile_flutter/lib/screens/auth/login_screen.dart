@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
+import '../../services/language_service.dart';
 import '../../widgets/pep_logo.dart';
 import 'otp_sheet.dart';
 import 'register_screen.dart';
@@ -51,12 +52,13 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } finally {
-      if (mounted) { setState(() => _loading = false); }
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = LanguageService.instance;
     return Scaffold(
       backgroundColor: kBackground,
       body: SafeArea(
@@ -72,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const PepLogo(size: 88),
                   const SizedBox(height: 12),
                   Text(
-                    'Tu app de salud y nutrición',
+                    l.tr('app_subtitle'),
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 15, color: Colors.grey[600]),
                   ),
@@ -82,13 +84,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
-                      labelText: 'Correo electrónico',
-                      prefixIcon: Icon(Icons.email_outlined),
+                    decoration: InputDecoration(
+                      labelText: l.tr('login_email'),
+                      prefixIcon: const Icon(Icons.email_outlined),
                     ),
                     validator: (v) {
-                      if (v == null || v.isEmpty) return 'Ingresa tu correo';
-                      if (!v.contains('@')) return 'Correo inválido';
+                      if (v == null || v.isEmpty) return l.tr('login_email_empty');
+                      if (!v.contains('@')) return l.tr('login_email_invalid');
                       return null;
                     },
                   ),
@@ -100,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _login(),
                     decoration: InputDecoration(
-                      labelText: 'Contraseña',
+                      labelText: l.tr('login_password'),
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(_obscurePassword
@@ -111,8 +113,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     validator: (v) {
-                      if (v == null || v.isEmpty) return 'Ingresa tu contraseña';
-                      if (v.length < 6) return 'Mínimo 6 caracteres';
+                      if (v == null || v.isEmpty) return l.tr('login_password_empty');
+                      if (v.length < 6) return l.tr('login_password_short');
                       return null;
                     },
                   ),
@@ -128,14 +130,14 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: CircularProgressIndicator(
                                   color: Colors.white, strokeWidth: 2.5),
                             )
-                          : const Text('Iniciar sesión'),
+                          : Text(l.tr('login_btn')),
                     ),
                   ),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('¿No tienes cuenta? ',
+                      Text(l.tr('login_no_account'),
                           style: TextStyle(color: Colors.grey[600])),
                       GestureDetector(
                         onTap: () => Navigator.push(
@@ -144,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               builder: (_) => const RegisterScreen()),
                         ),
                         child: Text(
-                          'Regístrate',
+                          l.tr('login_register_link'),
                           style: TextStyle(
                             color: kPrimary,
                             fontWeight: FontWeight.bold,

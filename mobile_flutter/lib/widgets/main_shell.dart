@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/supabase_service.dart';
 import '../services/units_service.dart';
+import '../services/language_service.dart';
 import '../screens/onboarding/onboarding_screen.dart';
 import '../screens/tabs/home_screen.dart';
 import '../screens/tabs/weight_screen.dart';
@@ -33,7 +34,6 @@ class _MainShellState extends State<MainShell> {
   }
 
   Future<void> _checkOnboarding() async {
-    // Always query the DB — SharedPreferences can be stale between installs
     Map<String, dynamic>? profile;
     try {
       profile = await getProfile();
@@ -64,36 +64,40 @@ class _MainShellState extends State<MainShell> {
       return const OnboardingScreen();
     }
 
-    return Scaffold(
-      body: ListenableBuilder(
-        listenable: UnitsService.instance,
-        builder: (context, _) => _tabs[_currentIndex],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (i) => setState(() => _currentIndex = i),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Inicio',
+    // Rebuild tabs + nav bar when units or language changes.
+    return ListenableBuilder(
+      listenable: Listenable.merge([UnitsService.instance, LanguageService.instance]),
+      builder: (context, _) {
+        final l = LanguageService.instance;
+        return Scaffold(
+          body: _tabs[_currentIndex],
+          bottomNavigationBar: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (i) => setState(() => _currentIndex = i),
+            items: [
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.home_outlined),
+                activeIcon: const Icon(Icons.home),
+                label: l.tr('nav_home'),
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.monitor_weight_outlined),
+                activeIcon: const Icon(Icons.monitor_weight),
+                label: l.tr('nav_weight'),
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.show_chart),
+                label: l.tr('nav_progress'),
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.calendar_month_outlined),
+                activeIcon: const Icon(Icons.calendar_month),
+                label: l.tr('nav_reminders'),
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.monitor_weight_outlined),
-            activeIcon: Icon(Icons.monitor_weight),
-            label: 'Peso',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.show_chart),
-            label: 'Progreso',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month_outlined),
-            activeIcon: Icon(Icons.calendar_month),
-            label: 'Recordatorios',
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

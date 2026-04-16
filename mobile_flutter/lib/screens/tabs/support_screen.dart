@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../constants/theme.dart';
+import '../../services/language_service.dart';
 
 class SupportScreen extends StatelessWidget {
   const SupportScreen({super.key});
 
   static const String _whatsAppNumber = '525500000000';
-  static const String _whatsAppMessage =
-      'Hola, necesito ayuda con la app de Pep Education.';
 
   Future<void> _openWhatsApp(BuildContext context) async {
-    final encodedMessage = Uri.encodeComponent(_whatsAppMessage);
+    final l = LanguageService.instance;
+    final encodedMessage = Uri.encodeComponent(l.tr('support_description'));
     final uri = Uri.parse(
         'https://wa.me/$_whatsAppNumber?text=$encodedMessage');
 
@@ -19,9 +19,8 @@ class SupportScreen extends StatelessWidget {
     } else {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content:
-                Text('No se pudo abrir WhatsApp. Verifica que esté instalado.'),
+          SnackBar(
+            content: Text(l.tr('support_whatsapp_error')),
             backgroundColor: Colors.orange,
           ),
         );
@@ -31,8 +30,9 @@ class SupportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = LanguageService.instance;
     return Scaffold(
-      appBar: AppBar(title: const Text('Soporte')),
+      appBar: AppBar(title: Text(l.tr('support_title'))),
       backgroundColor: kBackground,
       body: Center(
         child: Padding(
@@ -54,14 +54,14 @@ class SupportScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
-                '¿Necesitas ayuda?',
-                style:
-                    TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              Text(
+                l.tr('support_question'),
+                style: const TextStyle(
+                    fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Text(
-                'Nuestro equipo de nutrición está disponible para apoyarte. Contáctanos por WhatsApp.',
+                l.tr('support_description'),
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 15, color: Colors.grey[600]),
               ),
@@ -78,20 +78,19 @@ class SupportScreen extends StatelessWidget {
                   ),
                   onPressed: () => _openWhatsApp(context),
                   icon: const Icon(Icons.chat_bubble_outline),
-                  label: const Text(
-                    'Contactar por WhatsApp',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  label: Text(
+                    l.tr('support_whatsapp_btn'),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
               const SizedBox(height: 24),
               Text(
-                'Horario de atención:\nLunes a Viernes · 9:00 – 18:00',
+                l.tr('support_hours'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[500],
-                    height: 1.6),
+                    fontSize: 13, color: Colors.grey[500], height: 1.6),
               ),
             ],
           ),

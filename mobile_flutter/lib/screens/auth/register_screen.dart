@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
+import '../../services/language_service.dart';
 import '../../widgets/pep_logo.dart';
 import 'otp_sheet.dart';
 
@@ -36,7 +37,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final email = _emailController.text.trim();
       await signUp(email, _passwordController.text);
       if (mounted) {
-        // Go back to login then immediately show OTP sheet
         Navigator.pop(context);
         showOtpSheet(context, email);
       }
@@ -59,8 +59,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = LanguageService.instance;
     return Scaffold(
-      appBar: AppBar(title: const Text('Crear cuenta')),
+      appBar: AppBar(title: Text(l.tr('register_title'))),
       backgroundColor: kBackground,
       body: SafeArea(
         child: Center(
@@ -75,7 +76,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const PepLogo(size: 72),
                   const SizedBox(height: 12),
                   Text(
-                    'Regístrate',
+                    l.tr('register_subtitle'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         fontSize: 24,
@@ -87,13 +88,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(
-                      labelText: 'Correo electrónico',
-                      prefixIcon: Icon(Icons.email_outlined),
+                    decoration: InputDecoration(
+                      labelText: l.tr('login_email'),
+                      prefixIcon: const Icon(Icons.email_outlined),
                     ),
                     validator: (v) {
-                      if (v == null || v.isEmpty) return 'Ingresa tu correo';
-                      if (!v.contains('@')) return 'Correo inválido';
+                      if (v == null || v.isEmpty) return l.tr('login_email_empty');
+                      if (!v.contains('@')) return l.tr('login_email_invalid');
                       return null;
                     },
                   ),
@@ -103,7 +104,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     obscureText: _obscurePassword,
                     textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
-                      labelText: 'Contraseña',
+                      labelText: l.tr('login_password'),
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(_obscurePassword
@@ -114,8 +115,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ),
                     validator: (v) {
-                      if (v == null || v.isEmpty) return 'Ingresa una contraseña';
-                      if (v.length < 6) return 'Mínimo 6 caracteres';
+                      if (v == null || v.isEmpty) return l.tr('register_password_empty');
+                      if (v.length < 6) return l.tr('login_password_short');
                       return null;
                     },
                   ),
@@ -126,7 +127,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _register(),
                     decoration: InputDecoration(
-                      labelText: 'Confirmar contraseña',
+                      labelText: l.tr('register_confirm_password'),
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(_obscureConfirm
@@ -138,7 +139,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     validator: (v) {
                       if (v != _passwordController.text) {
-                        return 'Las contraseñas no coinciden';
+                        return l.tr('register_password_mismatch');
                       }
                       return null;
                     },
@@ -155,19 +156,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               child: CircularProgressIndicator(
                                   color: Colors.white, strokeWidth: 2.5),
                             )
-                          : const Text('Crear cuenta'),
+                          : Text(l.tr('register_btn')),
                     ),
                   ),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('¿Ya tienes cuenta? ',
+                      Text(l.tr('register_has_account'),
                           style: TextStyle(color: Colors.grey[600])),
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: Text(
-                          'Inicia sesión',
+                          l.tr('register_login_link'),
                           style: TextStyle(
                               color: kPrimary, fontWeight: FontWeight.bold),
                         ),

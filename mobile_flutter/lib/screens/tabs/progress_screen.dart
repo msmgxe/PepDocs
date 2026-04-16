@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
 import '../../services/units_service.dart';
+import '../../services/language_service.dart';
 import '../../utils/achievements_helper.dart';
 
 enum _Period { month1, month3, month6, all }
@@ -22,7 +23,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   Map<String, dynamic>? _profile;
   bool _loading = true;
   _Period _period = _Period.all;
-  int _totalMeasurements = 0; // Total histórico de pesajes para cálculo de logros
+  int _totalMeasurements = 0;
 
   @override
   void initState() {
@@ -39,7 +40,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
       if (mounted) {
         setState(() {
           _profile = profile;
-          _measurements = measurements.reversed.toList(); // ascending for chart
+          _measurements = measurements.reversed.toList();
           _totalMeasurements = measurements.length;
         });
       }
@@ -75,10 +76,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   String _bmiCategory(double bmi) {
-    if (bmi < 18.5) return 'Bajo peso';
-    if (bmi < 25) return 'Normal';
-    if (bmi < 30) return 'Sobrepeso';
-    return 'Obesidad';
+    final l = LanguageService.instance;
+    if (bmi < 18.5) return l.tr('bmi_underweight');
+    if (bmi < 25) return l.tr('bmi_normal_short');
+    if (bmi < 30) return l.tr('bmi_overweight');
+    return l.tr('bmi_obesity');
   }
 
   Color _bmiColor(double bmi) {
@@ -90,6 +92,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = LanguageService.instance;
     final filtered = _filtered;
     final spots = _buildSpots(filtered);
     final targetWeight = (_profile?['goal_weight_kg'] as num?)?.toDouble();
@@ -120,8 +123,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
       maxY = ys.reduce((a, b) => a > b ? a : b) + 2;
     }
 
+    final dateLocale = l.dateLocale;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Progreso')),
+      appBar: AppBar(title: Text(l.tr('progress_title'))),
       backgroundColor: kBackground,
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -130,7 +135,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
-                  // ── Body figure card ──────────────────────────────
+                  // ── Body figure card ─────────────────────────────
                   if (currentWeight != null)
                     _BodyCard(
                       sex: sex,
@@ -144,7 +149,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
                   if (currentWeight != null) const SizedBox(height: 16),
 
-                  // ── Summary mini-cards ────────────────────────────
+                  // ── Summary mini-cards ───────────────────────────
                   if (currentWeight != null)
                     ListenableBuilder(
                       listenable: UnitsService.instance,
@@ -152,8 +157,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
                         children: [
                           Expanded(
                             child: _MiniCard(
-                              label: 'Peso inicial',
-                              value: UnitsService.instance.formatWeight(firstWeight ?? currentWeight),
+                              label: l.tr('progress_initial_weight'),
+                              value: UnitsService.instance.formatWeight(
+                                  firstWeight ?? currentWeight),
                               color: kPrimary,
                             ),
                           ),
@@ -161,8 +167,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: _MiniCard(
-                                label: 'Meta',
-                                value: UnitsService.instance.formatWeight(targetWeight),
+                                label: l.tr('progress_goal'),
+                                value: UnitsService.instance
+                                    .formatWeight(targetWeight),
                                 color: Colors.green,
                               ),
                             ),
@@ -172,7 +179,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: _MiniCard(
-                                label: 'Diferencia',
+                                label: l.tr('progress_difference'),
                                 value:
                                     '${(currentWeight - firstWeight) > 0 ? '+' : ''}${UnitsService.instance.formatWeight((currentWeight - firstWeight).abs())}',
                                 color: currentWeight < firstWeight
@@ -196,15 +203,18 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
                   const SizedBox(height: 24),
 
-                  // ── Period filter ─────────────────────────────────
+                  // ── Period filter ────────────────────────────────
                   Center(
                     child: SegmentedButton<_Period>(
                       segments: const [
-                        ButtonSegment(value: _Period.month1, label: Text('1M')),
-                        ButtonSegment(value: _Period.month3, label: Text('3M')),
-                        ButtonSegment(value: _Period.month6, label: Text('6M')),
                         ButtonSegment(
-                            value: _Period.all, label: Text('Todo')),
+                            value: _Period.month1, label: Text('1M')),
+                        ButtonSegment(
+                            value: _Period.month3, label: Text('3M')),
+                        ButtonSegment(
+                            value: _Period.month6, label: Text('6M')),
+                        ButtonSegment(
+                            value: _Period.all, label: Text('All')),
                       ],
                       selected: {_period},
                       onSelectionChanged: (s) =>
@@ -214,17 +224,18 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
                   const SizedBox(height: 16),
 
-                  // ── Chart ─────────────────────────────────────────
+                  // ── Chart ────────────────────────────────────────
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Evolución del peso',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
+                          Text(
+                            l.tr('progress_chart_title'),
+                            style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 24),
                           spots.isEmpty
@@ -242,15 +253,16 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                         Text(
                                           filtered.isEmpty &&
                                                   _period != _Period.all
-                                              ? 'Sin registros en este período'
-                                              : 'Aún no hay registros',
+                                              ? l.tr(
+                                                  'progress_no_records_period')
+                                              : l.tr('progress_no_records'),
                                           style: TextStyle(
                                               color: Colors.grey[500],
                                               fontSize: 14),
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          'Ve a la pestaña Peso y toca +',
+                                          l.tr('progress_hint'),
                                           style: TextStyle(
                                               color: Colors.grey[400],
                                               fontSize: 12),
@@ -271,7 +283,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                         horizontalInterval: 5,
                                         getDrawingHorizontalLine: (v) =>
                                             FlLine(
-                                          color: kPrimary.withValues(alpha: 0.12),
+                                          color: kPrimary
+                                              .withValues(alpha: 0.12),
                                           strokeWidth: 1,
                                         ),
                                       ),
@@ -279,11 +292,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                         show: true,
                                         border: Border(
                                           bottom: BorderSide(
-                                            color: kPrimary.withValues(alpha: 0.25),
+                                            color: kPrimary
+                                                .withValues(alpha: 0.25),
                                             width: 1.5,
                                           ),
                                           left: BorderSide(
-                                            color: kPrimary.withValues(alpha: 0.25),
+                                            color: kPrimary
+                                                .withValues(alpha: 0.25),
                                             width: 1.5,
                                           ),
                                         ),
@@ -298,7 +313,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                               v.toStringAsFixed(0),
                                               style: TextStyle(
                                                   fontSize: 11,
-                                                  color: kPrimary.withValues(alpha: 0.7)),
+                                                  color: kPrimary
+                                                      .withValues(
+                                                          alpha: 0.7)),
                                             ),
                                           ),
                                         ),
@@ -309,22 +326,26 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                             getTitlesWidget: (v, meta) {
                                               final idx = v.toInt();
                                               if (idx < 0 ||
-                                                  idx >= filtered.length) {
+                                                  idx >=
+                                                      filtered.length) {
                                                 return const SizedBox
                                                     .shrink();
                                               }
                                               if (idx != 0 &&
                                                   idx !=
-                                                      filtered.length - 1 &&
+                                                      filtered.length -
+                                                          1 &&
                                                   filtered.length > 6 &&
                                                   idx %
-                                                          (filtered.length ~/
+                                                          (filtered
+                                                                  .length ~/
                                                               4) !=
                                                       0) {
                                                 return const SizedBox
                                                     .shrink();
                                               }
-                                              final dateStr = filtered[idx][
+                                              final dateStr = filtered[idx]
+                                                          [
                                                           'measurement_date']
                                                       ?.toString()
                                                       .substring(0, 10) ??
@@ -342,7 +363,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                                       : '',
                                                   style: TextStyle(
                                                       fontSize: 10,
-                                                      color: kPrimary.withValues(alpha: 0.7)),
+                                                      color: kPrimary
+                                                          .withValues(
+                                                              alpha: 0.7)),
                                                 ),
                                               );
                                             },
@@ -358,19 +381,25 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                       lineTouchData: LineTouchData(
                                         touchTooltipData:
                                             LineTouchTooltipData(
-                                          getTooltipItems: (touchedSpots) =>
-                                              touchedSpots
-                                                  .map((s) =>
-                                                      LineTooltipItem(
-                                                        UnitsService.instance.formatWeight(s.y),
-                                                        const TextStyle(
-                                                          color: Colors.white,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 12,
-                                                        ),
-                                                      ))
-                                                  .toList(),
+                                          getTooltipItems:
+                                              (touchedSpots) =>
+                                                  touchedSpots
+                                                      .map((s) =>
+                                                          LineTooltipItem(
+                                                            UnitsService
+                                                                .instance
+                                                                .formatWeight(
+                                                                    s.y),
+                                                            const TextStyle(
+                                                              color: Colors
+                                                                  .white,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              fontSize: 12,
+                                                            ),
+                                                          ))
+                                                      .toList(),
                                         ),
                                       ),
                                       lineBarsData: [
@@ -381,8 +410,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                           barWidth: 3,
                                           dotData: FlDotData(
                                             show: true,
-                                            getDotPainter: (s, x, b, i) =>
-                                                FlDotCirclePainter(
+                                            getDotPainter:
+                                                (s, x, b, i) =>
+                                                    FlDotCirclePainter(
                                               radius: 4,
                                               color: kPrimary,
                                               strokeColor: Colors.white,
@@ -427,7 +457,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                         .withValues(alpha: 0.6)),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'Meta: ${UnitsService.instance.formatWeight(targetWeight)}',
+                                  l.tr('chart_meta', params: {
+                                    'amount': UnitsService.instance
+                                        .formatWeight(targetWeight)
+                                  }),
                                   style: TextStyle(
                                       fontSize: 12,
                                       color: Colors.grey[600]),
@@ -443,7 +476,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
                   const SizedBox(height: 16),
 
-                  // ── History list ──────────────────────────────────
+                  // ── History list ─────────────────────────────────
                   if (filtered.isNotEmpty)
                     Card(
                       child: Padding(
@@ -451,9 +484,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Historial',
-                              style: TextStyle(
+                            Text(
+                              l.tr('progress_history'),
+                              style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold),
                             ),
@@ -476,7 +509,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                   children: [
                                     Text(
                                       date != null
-                                          ? DateFormat('dd MMM yyyy', 'es')
+                                          ? DateFormat(
+                                                  'dd MMM yyyy',
+                                                  dateLocale)
                                               .format(date)
                                           : dateStr,
                                       style: TextStyle(
@@ -498,8 +533,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                       ),
                     ),
 
-                  // ── Stats Row: INICIO | HOY | META ───────────────────────────
-                  // 3 tarjetas compactas por la imagen de referencia
+                  // ── Stats Row ────────────────────────────────────
                   const SizedBox(height: 24),
                   if (currentWeight != null)
                     _StatsRow(
@@ -508,9 +542,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
                       goalWeight: targetWeight,
                     ),
 
-                  // ── Summary Card ──────────────────────────────────────────────
+                  // ── Summary Card ─────────────────────────────────
                   const SizedBox(height: 12),
-                  if (currentWeight != null && firstWeight != null &&
+                  if (currentWeight != null &&
+                      firstWeight != null &&
                       firstWeight != currentWeight)
                     _SummaryCard(
                       initialWeight: firstWeight,
@@ -518,15 +553,16 @@ class _ProgressScreenState extends State<ProgressScreen> {
                       goalWeight: targetWeight ?? 0,
                     ),
 
-                  // ── Logros ────────────────────────────────────────────────────
-                  // Grid 2xN con badges desbloqueados/bloqueados
+                  // ── Logros ───────────────────────────────────────
                   const SizedBox(height: 24),
-                  const Text('Logros',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  Text(l.tr('progress_achievements'),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 12),
                   _AchievementsGrid(
                     achievements: calculateAchievements(
-                      initialWeight: firstWeight ?? (currentWeight ?? 0),
+                      initialWeight:
+                          firstWeight ?? (currentWeight ?? 0),
                       currentWeight: currentWeight ?? 0,
                       goalWeight: targetWeight ?? 0,
                       bmi: bmi ?? 0,
@@ -536,11 +572,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     ),
                   ),
 
-                  // ── Sugerencias ───────────────────────────────────────────────
-                  // 2 tarjetas (lila + amarillo) personalizadas por IMC y edad
+                  // ── Sugerencias ──────────────────────────────────
                   const SizedBox(height: 24),
-                  const Text('Sugerencias del día',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                  Text(l.tr('progress_suggestions'),
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 12),
                   _SuggestionsRow(
                     suggestions: getSuggestions(
@@ -580,6 +616,7 @@ class _BodyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = LanguageService.instance;
     final isFemale = sex == 'femenino';
 
     return Card(
@@ -588,7 +625,6 @@ class _BodyCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ── Figure photo ─────────────────────────────────────────────────
             Column(
               children: [
                 ClipRRect(
@@ -616,27 +652,27 @@ class _BodyCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 if (sex != null)
                   Text(
-                    isFemale ? 'Femenino' : 'Masculino',
-                    style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                    isFemale ? l.tr('sex_female') : l.tr('sex_male'),
+                    style:
+                        TextStyle(fontSize: 11, color: Colors.grey[500]),
                   ),
               ],
             ),
             const SizedBox(width: 20),
-            // ── Stats ───────────────────────────────────────────────────────
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _StatRow(
                     icon: Icons.monitor_weight_outlined,
-                    label: 'Peso actual',
+                    label: l.tr('home_current_weight'),
                     value: UnitsService.instance.formatWeight(currentWeight),
                     color: kPrimary,
                   ),
                   if (height != null)
                     _StatRow(
                       icon: Icons.height,
-                      label: 'Estatura',
+                      label: l.tr('info_height'),
                       value: UnitsService.instance.formatHeight(height!),
                       color: Colors.blueGrey,
                     ),
@@ -644,7 +680,8 @@ class _BodyCard extends StatelessWidget {
                     _StatRow(
                       icon: Icons.calculate_outlined,
                       label: 'IMC',
-                      value: '${bmi!.toStringAsFixed(1)} · ${bmiCategory ?? ''}',
+                      value:
+                          '${bmi!.toStringAsFixed(1)} · ${bmiCategory ?? ''}',
                       color: bmiColor ?? Colors.grey,
                     ),
                   if (totalLost != null && totalLost!.abs() > 0.1)
@@ -652,9 +689,13 @@ class _BodyCard extends StatelessWidget {
                       icon: totalLost! > 0
                           ? Icons.trending_down
                           : Icons.trending_up,
-                      label: totalLost! > 0 ? 'Has bajado' : 'Has subido',
-                      value: UnitsService.instance.formatWeight(totalLost!.abs()),
-                      color: totalLost! > 0 ? Colors.green : Colors.orange,
+                      label: totalLost! > 0
+                          ? l.tr('progress_decreased')
+                          : l.tr('progress_increased'),
+                      value: UnitsService.instance
+                          .formatWeight(totalLost!.abs()),
+                      color:
+                          totalLost! > 0 ? Colors.green : Colors.orange,
                     ),
                 ],
               ),
@@ -662,7 +703,6 @@ class _BodyCard extends StatelessWidget {
           ],
         ),
       ),
-
     );
   }
 }
@@ -761,6 +801,7 @@ class _BmiGaugeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = LanguageService.instance;
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
@@ -768,9 +809,10 @@ class _BmiGaugeCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Text(
-                  'Índice de Masa Corporal (IMC)',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                Text(
+                  l.tr('bmi_gauge_title'),
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
                 if (category != null)
@@ -799,20 +841,28 @@ class _BmiGaugeCard extends StatelessWidget {
               child: CustomPaint(painter: _BmiGaugePainter(bmi: bmi)),
             ),
             Text(
-              'Rango Saludable: 18.5 – 24.9',
+              l.tr('bmi_healthy_range'),
               style: TextStyle(fontSize: 11, color: Colors.grey[500]),
             ),
             const SizedBox(height: 8),
-            const Row(
+            Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _LegendDot(color: Color(0xFF7B1FA2), label: 'Bajo peso'),
-                SizedBox(width: 10),
-                _LegendDot(color: Color(0xFF4CAF50), label: 'Normal'),
-                SizedBox(width: 10),
-                _LegendDot(color: Color(0xFFFF9800), label: 'Sobrepeso'),
-                SizedBox(width: 10),
-                _LegendDot(color: Color(0xFFF44336), label: 'Obesidad'),
+                _LegendDot(
+                    color: const Color(0xFF7B1FA2),
+                    label: l.tr('bmi_underweight')),
+                const SizedBox(width: 10),
+                _LegendDot(
+                    color: const Color(0xFF4CAF50),
+                    label: l.tr('bmi_normal_short')),
+                const SizedBox(width: 10),
+                _LegendDot(
+                    color: const Color(0xFFFF9800),
+                    label: l.tr('bmi_overweight')),
+                const SizedBox(width: 10),
+                _LegendDot(
+                    color: const Color(0xFFF44336),
+                    label: l.tr('bmi_obesity')),
               ],
             ),
           ],
@@ -830,7 +880,6 @@ class _BmiGaugePainter extends CustomPainter {
 
   const _BmiGaugePainter({required this.bmi});
 
-  // _min → π (9 o'clock), _max → 2π (3 o'clock), through top (3π/2)
   double _toAngle(double val) =>
       math.pi +
       (val.clamp(_min, _max) - _min) / (_max - _min) * math.pi;
@@ -864,7 +913,6 @@ class _BmiGaugePainter extends CustomPainter {
           arcPaint);
     }
 
-    // White dividers between zones
     final divPaint = Paint()
       ..color = Colors.white
       ..strokeWidth = 3.0;
@@ -879,7 +927,6 @@ class _BmiGaugePainter extends CustomPainter {
       );
     }
 
-    // BMI value text
     final bmiTp = TextPainter(
       text: TextSpan(
         text: bmi.toStringAsFixed(1),
@@ -896,7 +943,6 @@ class _BmiGaugePainter extends CustomPainter {
       Offset(cx - bmiTp.width / 2, cy - r * 0.48 - bmiTp.height / 2),
     );
 
-    // Needle
     final na = _toAngle(bmi);
     canvas.drawLine(
       center,
@@ -908,7 +954,6 @@ class _BmiGaugePainter extends CustomPainter {
         ..strokeCap = StrokeCap.round,
     );
 
-    // Center hub
     canvas.drawCircle(center, 7, Paint()..color = Colors.grey.shade800);
     canvas.drawCircle(center, 4, Paint()..color = Colors.white);
   }
@@ -940,11 +985,7 @@ class _LegendDot extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ── Stats Row: INICIO | HOY | META ──────────────────────────────────────────
-// Muestra tres tarjetas compactas con los pesos clave del paciente,
-// fiel al diseño de la imagen de referencia.
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Stats Row ────────────────────────────────────────────────────────────────
 
 class _StatsRow extends StatelessWidget {
   final double initialWeight;
@@ -959,11 +1000,21 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = LanguageService.instance;
     final items = [
-      _StatItem(label: 'INICIO', value: UnitsService.instance.formatWeight(initialWeight), icon: Icons.flag_outlined),
-      _StatItem(label: 'HOY',    value: UnitsService.instance.formatWeight(currentWeight), icon: Icons.place_outlined),
+      _StatItem(
+          label: l.tr('progress_start'),
+          value: UnitsService.instance.formatWeight(initialWeight),
+          icon: Icons.flag_outlined),
+      _StatItem(
+          label: l.tr('progress_today'),
+          value: UnitsService.instance.formatWeight(currentWeight),
+          icon: Icons.place_outlined),
       if (goalWeight != null && goalWeight! > 0)
-        _StatItem(label: 'META', value: UnitsService.instance.formatWeight(goalWeight!),  icon: Icons.gps_fixed),
+        _StatItem(
+            label: l.tr('progress_meta'),
+            value: UnitsService.instance.formatWeight(goalWeight!),
+            icon: Icons.gps_fixed),
     ];
 
     return Row(
@@ -971,20 +1022,28 @@ class _StatsRow extends StatelessWidget {
           .map((item) => Expanded(
                 child: Card(
                   margin: const EdgeInsets.only(right: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
                   elevation: 0,
                   color: const Color(0xFFF3EEFF),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 14, horizontal: 8),
                     child: Column(
                       children: [
                         Icon(item.icon, size: 18, color: kPrimary),
                         const SizedBox(height: 4),
                         Text(item.label,
-                            style: TextStyle(fontSize: 11, color: Colors.grey[600], fontWeight: FontWeight.w600)),
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w600)),
                         const SizedBox(height: 2),
                         Text(item.value,
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: kPrimary)),
+                            style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: kPrimary)),
                       ],
                     ),
                   ),
@@ -999,13 +1058,11 @@ class _StatItem {
   final String label;
   final String value;
   final IconData icon;
-  const _StatItem({required this.label, required this.value, required this.icon});
+  const _StatItem(
+      {required this.label, required this.value, required this.icon});
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ── Summary Card: "Has bajado X kg" ─────────────────────────────────────────
-// Tarjeta amarilla que resume el progreso total y cuánto falta para la meta.
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Summary Card ─────────────────────────────────────────────────────────────
 
 class _SummaryCard extends StatelessWidget {
   final double initialWeight;
@@ -1020,6 +1077,7 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = LanguageService.instance;
     final lost = initialWeight - currentWeight;
     final toGoal = currentWeight - goalWeight;
     final reachedGoal = goalWeight > 0 && toGoal <= 0;
@@ -1033,7 +1091,9 @@ class _SummaryCard extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            reachedGoal ? Icons.emoji_events : (lost > 0 ? Icons.trending_down : Icons.trending_up),
+            reachedGoal
+                ? Icons.emoji_events
+                : (lost > 0 ? Icons.trending_down : Icons.trending_up),
             color: kPrimary,
             size: 26,
           ),
@@ -1044,21 +1104,34 @@ class _SummaryCard extends StatelessWidget {
               children: [
                 Text(
                   reachedGoal
-                      ? '¡Meta alcanzada!'
+                      ? l.tr('progress_goal_reached')
                       : lost > 0
-                          ? 'Has bajado ${UnitsService.instance.formatWeight(lost)}'
-                          : 'Inicio en ${UnitsService.instance.formatWeight(initialWeight)}',
+                          ? l.tr('progress_lost', params: {
+                              'amount':
+                                  UnitsService.instance.formatWeight(lost)
+                            })
+                          : l.tr('progress_started_at', params: {
+                              'amount': UnitsService.instance
+                                  .formatWeight(initialWeight)
+                            }),
                   style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w700, color: kPrimary),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: kPrimary),
                 ),
                 if (!reachedGoal && goalWeight > 0)
                   Text(
-                    'Faltan ${UnitsService.instance.formatWeight(toGoal)} para tu meta de ${UnitsService.instance.formatWeight(goalWeight)}',
+                    l.tr('progress_to_go', params: {
+                      'amount':
+                          UnitsService.instance.formatWeight(toGoal),
+                      'goal':
+                          UnitsService.instance.formatWeight(goalWeight),
+                    }),
                     style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                   )
                 else if (reachedGoal)
                   Text(
-                    '¡Excelente trabajo, sigue así!',
+                    l.tr('progress_excellent'),
                     style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                   ),
               ],
@@ -1070,11 +1143,7 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ── Achievements Grid ────────────────────────────────────────────────────────
-// Grid 2×N de tarjetas de logros. Las desbloqueadas tienen fondo lila,
-// las bloqueadas están atenuadas con un icono de candado.
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Achievements Grid ────────────────────────────────────────────────────────
 
 class _AchievementsGrid extends StatelessWidget {
   final List<Achievement> achievements;
@@ -1097,10 +1166,14 @@ class _AchievementsGrid extends StatelessWidget {
         final a = achievements[idx];
         return Container(
           decoration: BoxDecoration(
-            color: a.unlocked ? const Color(0xFFEDE7FF) : const Color(0xFFF3F4F6),
+            color: a.unlocked
+                ? const Color(0xFFEDE7FF)
+                : const Color(0xFFF3F4F6),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: a.unlocked ? const Color(0xFFD8B4FE) : const Color(0xFFE5E7EB),
+              color: a.unlocked
+                  ? const Color(0xFFD8B4FE)
+                  : const Color(0xFFE5E7EB),
             ),
           ),
           child: Opacity(
@@ -1110,7 +1183,9 @@ class _AchievementsGrid extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(a.icon, size: 30, color: a.unlocked ? a.iconColor : Colors.grey),
+                  Icon(a.icon,
+                      size: 30,
+                      color: a.unlocked ? a.iconColor : Colors.grey),
                   const SizedBox(height: 4),
                   Text(
                     a.name,
@@ -1124,14 +1199,16 @@ class _AchievementsGrid extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     a.desc,
-                    style: const TextStyle(fontSize: 11, color: Colors.grey),
+                    style: const TextStyle(
+                        fontSize: 11, color: Colors.grey),
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   if (!a.unlocked) ...[
                     const SizedBox(height: 4),
-                    const Icon(Icons.lock_outline, size: 14, color: Colors.grey),
+                    const Icon(Icons.lock_outline,
+                        size: 14, color: Colors.grey),
                   ],
                 ],
               ),
@@ -1143,10 +1220,7 @@ class _AchievementsGrid extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ── Suggestions Row ──────────────────────────────────────────────────────────
-// Fila de 2 tarjetas (lila + amarilla) con sugerencias del día personalizadas.
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Suggestions Row ──────────────────────────────────────────────────────────
 
 class _SuggestionsRow extends StatelessWidget {
   final List<Suggestion> suggestions;
@@ -1157,8 +1231,12 @@ class _SuggestionsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: suggestions.map((s) {
-        final bg = s.isYellow ? const Color(0xFFFFFDE7) : const Color(0xFFF3EEFF);
-        final border = s.isYellow ? const Color(0xFFF5F3C6) : const Color(0xFFE9D5FF);
+        final bg = s.isYellow
+            ? const Color(0xFFFFFDE7)
+            : const Color(0xFFF3EEFF);
+        final border = s.isYellow
+            ? const Color(0xFFF5F3C6)
+            : const Color(0xFFE9D5FF);
         final isLast = s == suggestions.last;
         return Expanded(
           child: Container(
@@ -1176,7 +1254,9 @@ class _SuggestionsRow extends StatelessWidget {
                 Text(
                   s.title,
                   style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w700, color: kPrimary),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: kPrimary),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 4),

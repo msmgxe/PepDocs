@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
+import '../../services/language_service.dart';
 
 class RemindersScreen extends StatefulWidget {
   const RemindersScreen({super.key});
@@ -67,6 +68,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
   }
 
   void _showEventDialog(Map<String, dynamic>? existing, DateTime initialDate) {
+    final l = LanguageService.instance;
     final titleController =
         TextEditingController(text: existing?['title']?.toString() ?? '');
     final notesController =
@@ -101,7 +103,9 @@ class _RemindersScreenState extends State<RemindersScreen> {
                 Row(
                   children: [
                     Text(
-                      existing == null ? 'Nueva cita' : 'Editar cita',
+                      existing == null
+                          ? l.tr('reminder_add')
+                          : l.tr('reminder_edit'),
                       style: const TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold),
                     ),
@@ -115,12 +119,13 @@ class _RemindersScreenState extends State<RemindersScreen> {
                 TextFormField(
                   controller: titleController,
                   textCapitalization: TextCapitalization.sentences,
-                  decoration: const InputDecoration(
-                    labelText: 'Título de la cita',
-                    prefixIcon: Icon(Icons.title),
+                  decoration: InputDecoration(
+                    labelText: l.tr('reminder_title_field'),
+                    prefixIcon: const Icon(Icons.title),
                   ),
-                  validator: (v) =>
-                      (v == null || v.isEmpty) ? 'Ingresa un título' : null,
+                  validator: (v) => (v == null || v.isEmpty)
+                      ? l.tr('reminder_title_empty')
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 // Date
@@ -135,12 +140,12 @@ class _RemindersScreenState extends State<RemindersScreen> {
                     if (d != null) setDialogState(() => selectedDate = d);
                   },
                   child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Fecha',
-                      prefixIcon: Icon(Icons.calendar_today),
+                    decoration: InputDecoration(
+                      labelText: l.tr('reminder_date'),
+                      prefixIcon: const Icon(Icons.calendar_today),
                     ),
-                    child:
-                        Text(DateFormat('dd/MM/yyyy').format(selectedDate)),
+                    child: Text(
+                        DateFormat('dd/MM/yyyy').format(selectedDate)),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -154,9 +159,9 @@ class _RemindersScreenState extends State<RemindersScreen> {
                     if (t != null) setDialogState(() => selectedTime = t);
                   },
                   child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Hora',
-                      prefixIcon: Icon(Icons.access_time),
+                    decoration: InputDecoration(
+                      labelText: l.tr('reminder_time'),
+                      prefixIcon: const Icon(Icons.access_time),
                     ),
                     child: Text(selectedTime.format(ctx)),
                   ),
@@ -165,13 +170,12 @@ class _RemindersScreenState extends State<RemindersScreen> {
                 TextFormField(
                   controller: notesController,
                   maxLines: 2,
-                  decoration: const InputDecoration(
-                    labelText: 'Notas (opcional)',
-                    prefixIcon: Icon(Icons.notes),
+                  decoration: InputDecoration(
+                    labelText: l.tr('reminder_notes'),
+                    prefixIcon: const Icon(Icons.notes),
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Sync to device calendar
                 Row(
                   children: [
                     Checkbox(
@@ -180,7 +184,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
                       onChanged: (v) =>
                           setDialogState(() => syncToDevice = v ?? false),
                     ),
-                    const Text('Agregar al calendario del dispositivo'),
+                    Expanded(child: Text(l.tr('reminder_sync'))),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -197,7 +201,9 @@ class _RemindersScreenState extends State<RemindersScreen> {
                       syncToDevice: syncToDevice,
                     );
                   },
-                  child: Text(existing == null ? 'Guardar' : 'Actualizar'),
+                  child: Text(existing == null
+                      ? l.tr('save')
+                      : l.tr('update')),
                 ),
               ],
             ),
@@ -217,8 +223,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
   }) async {
     if (_profile == null) return;
     try {
-      final eventDateTime = DateTime(
-          date.year, date.month, date.day, time.hour, time.minute);
+      final eventDateTime =
+          DateTime(date.year, date.month, date.day, time.hour, time.minute);
 
       final data = {
         'patient_id': _profile!['id'].toString(),
@@ -250,6 +256,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
 
   Future<void> _syncToDeviceCalendar(
       String title, DateTime dateTime, String? notes) async {
+    final l = LanguageService.instance;
     try {
       var permissionsGranted = await _deviceCalendar.hasPermissions();
       if (permissionsGranted.isSuccess &&
@@ -286,8 +293,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cita sincronizada con el calendario'),
+          SnackBar(
+            content: Text(l.tr('reminder_synced')),
             backgroundColor: Colors.green,
           ),
         );
@@ -298,19 +305,20 @@ class _RemindersScreenState extends State<RemindersScreen> {
   }
 
   Future<void> _deleteEvent(String id) async {
+    final l = LanguageService.instance;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar cita'),
-        content: const Text('¿Seguro que deseas eliminar esta cita?'),
+        title: Text(l.tr('reminder_delete_title')),
+        content: Text(l.tr('reminder_delete_confirm')),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar')),
+              child: Text(l.tr('cancel'))),
           TextButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: TextButton.styleFrom(foregroundColor: kError),
-              child: const Text('Eliminar')),
+              child: Text(l.tr('delete'))),
         ],
       ),
     );
@@ -322,10 +330,13 @@ class _RemindersScreenState extends State<RemindersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = LanguageService.instance;
     final dayEvents = _eventsForDay(_selectedDay);
+    final dateLocale = l.dateLocale;
+    final calLocale = l.calendarLocale;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Recordatorios')),
+      appBar: AppBar(title: Text(l.tr('reminders_title'))),
       backgroundColor: kBackground,
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddDialog,
@@ -335,7 +346,6 @@ class _RemindersScreenState extends State<RemindersScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // Calendar
                 Card(
                   margin: const EdgeInsets.all(12),
                   child: TableCalendar(
@@ -368,32 +378,37 @@ class _RemindersScreenState extends State<RemindersScreen> {
                       ),
                       markersMaxCount: 3,
                     ),
-                    headerStyle: HeaderStyle(
+                    headerStyle: const HeaderStyle(
                       formatButtonVisible: false,
                       titleCentered: true,
-                      titleTextStyle: const TextStyle(
+                      titleTextStyle: TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-                    locale: 'es_ES',
+                    locale: calLocale,
                   ),
                 ),
 
-                // Events for selected day
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   child: Row(
                     children: [
                       Text(
-                        DateFormat('d \'de\' MMMM', 'es')
-                            .format(_selectedDay),
+                        dateLocale == 'en'
+                            ? DateFormat('MMMM d', 'en').format(_selectedDay)
+                            : DateFormat("d 'de' MMMM", dateLocale)
+                                .format(_selectedDay),
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                       const Spacer(),
                       if (dayEvents.isNotEmpty)
                         Text(
-                          '${dayEvents.length} cita${dayEvents.length > 1 ? 's' : ''}',
+                          dayEvents.length == 1
+                              ? l.tr('reminder_count',
+                                  params: {'n': '${dayEvents.length}'})
+                              : l.tr('reminder_count_plural',
+                                  params: {'n': '${dayEvents.length}'}),
                           style: TextStyle(
                               color: Colors.grey[600], fontSize: 13),
                         ),
@@ -411,8 +426,9 @@ class _RemindersScreenState extends State<RemindersScreen> {
                                   size: 48, color: Colors.grey[400]),
                               const SizedBox(height: 8),
                               Text(
-                                'Sin citas este día',
-                                style: TextStyle(color: Colors.grey[500]),
+                                l.tr('reminder_none_today'),
+                                style:
+                                    TextStyle(color: Colors.grey[500]),
                               ),
                             ],
                           ),
@@ -431,7 +447,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
                             }
 
                             return Card(
-                              margin: const EdgeInsets.only(bottom: 10),
+                              margin:
+                                  const EdgeInsets.only(bottom: 10),
                               child: ListTile(
                                 leading: CircleAvatar(
                                   backgroundColor:
@@ -473,8 +490,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
-                                      icon:
-                                          const Icon(Icons.edit_outlined),
+                                      icon: const Icon(
+                                          Icons.edit_outlined),
                                       onPressed: () =>
                                           _showEditDialog(e),
                                       color: kPrimary,
