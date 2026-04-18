@@ -3,5 +3,14 @@
     "source.fixAll": "explicit",
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
-  }
+  },
+  "java.import.exclusions": [
+    "**/node_modules/**",
+    "**/.git/**",
+    "**/build/**",
+    "**/.gradle/**"
+  ],
+  "java.import.gradle.enabled": false,
+  "java.import.maven.enabled": false,
+  "java.autobuild.enabled": false
 }

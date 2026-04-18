@@ -1,3 +1,23 @@
 {
-    "java.compile.nullAnalysis.mode": "automatic"
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.import.exclusions": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/build/**",
+        "**/.gradle/**"
+    ],
+    "java.project.resourceFilters": [
+        "node_modules",
+        ".git",
+        "build",
+        ".gradle"
+    ],
+    "java.import.gradle.enabled": false,
+    "java.import.maven.enabled": false,
+    "java.autobuild.enabled": false,
+    "files.watcherExclude": {
+        "**/node_modules/**": true,
+        "**/.gradle/**": true,
+        "**/build/**": true
+    }
 }
