@@ -83,31 +83,44 @@ class _RemindersScreenState extends State<RemindersScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-          ),
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+        builder: (ctx, setDialogState) {
+          final keyboardHeight = MediaQuery.of(ctx).viewInsets.bottom;
+          final maxHeight = MediaQuery.of(ctx).size.height * 0.85;
+          return Padding(
+            padding: EdgeInsets.only(bottom: keyboardHeight),
+            child: Container(
+              constraints: BoxConstraints(maxHeight: maxHeight),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
                 Row(
                   children: [
-                    Text(
-                      existing == null
-                          ? l.tr('reminder_add')
-                          : l.tr('reminder_edit'),
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l.tr('app_name'),
+                          style: const TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w700),
+                        ),
+                        Text(
+                          existing == null
+                              ? l.tr('reminder_add')
+                              : l.tr('reminder_edit'),
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600]),
+                        ),
+                      ],
                     ),
                     const Spacer(),
                     IconButton(
@@ -205,10 +218,13 @@ class _RemindersScreenState extends State<RemindersScreen> {
                       ? l.tr('save')
                       : l.tr('update')),
                 ),
-              ],
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -336,7 +352,16 @@ class _RemindersScreenState extends State<RemindersScreen> {
     final calLocale = l.calendarLocale;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.tr('reminders_title'))),
+      appBar: AppBar(
+        centerTitle: true,
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l.tr('app_name'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(l.tr('reminders_title'), style: TextStyle(fontSize: 10, color: Colors.grey[500])),
+          ],
+        ),
+      ),
       backgroundColor: kBackground,
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddDialog,

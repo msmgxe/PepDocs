@@ -1,11 +1,16 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../constants/theme.dart';
 import '../../services/supabase_service.dart';
 import '../../services/units_service.dart';
 import '../../services/language_service.dart';
+
+const _kAdminUrl = 'https://pepeducation-admin.vercel.app';
+const _kNotifySecret = String.fromEnvironment('NOTIFY_SECRET', defaultValue: 'pep-notify-2026');
 
 class WeightScreen extends StatefulWidget {
   const WeightScreen({super.key});
@@ -99,32 +104,45 @@ class _WeightScreenState extends State<WeightScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-          ),
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+        builder: (ctx, setDialogState) {
+          final keyboardHeight = MediaQuery.of(ctx).viewInsets.bottom;
+          final maxHeight = MediaQuery.of(ctx).size.height * 0.85;
+          return Padding(
+            padding: EdgeInsets.only(bottom: keyboardHeight),
+            child: Container(
+              constraints: BoxConstraints(maxHeight: maxHeight),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
                 // Header
                 Row(
                   children: [
-                    Text(
-                      existing == null
-                          ? l.tr('weight_add_dialog')
-                          : l.tr('weight_edit_dialog'),
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l.tr('app_name'),
+                          style: const TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w700),
+                        ),
+                        Text(
+                          existing == null
+                              ? l.tr('weight_add_dialog')
+                              : l.tr('weight_edit_dialog'),
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600]),
+                        ),
+                      ],
                     ),
                     const Spacer(),
                     IconButton(
@@ -268,10 +286,13 @@ class _WeightScreenState extends State<WeightScreen> {
                       ? l.tr('save')
                       : l.tr('update')),
                 ),
-              ],
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
@@ -290,10 +311,11 @@ class _WeightScreenState extends State<WeightScreen> {
         photoUrl = await uploadPhoto(imageFile, _profile!['id'].toString());
       }
 
+      final dateStr = '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
       final data = {
         'patient_id': _profile!['id'].toString(),
         'weight_kg': weightKg,
-        'measurement_date': date.toIso8601String(),
+        'measurement_date': dateStr,
         'notes': notes,
         'photo_url': photoUrl,
       };
@@ -304,7 +326,33 @@ class _WeightScreenState extends State<WeightScreen> {
         data.remove('patient_id');
         await updateMeasurement(existing['id'].toString(), data);
       }
+
+      // Keep profile's current_weight_kg in sync with the latest measurement
+      final allMeasurements = await getMeasurements(_profile!['id'].toString());
+      if (allMeasurements.isNotEmpty) {
+        final latestWeight = (allMeasurements.first['weight_kg'] as num).toDouble();
+        await supabase
+            .from('profiles')
+            .update({'current_weight_kg': latestWeight})
+            .eq('id', _profile!['id'].toString());
+      }
+
       await _loadData();
+
+      // Send WhatsApp notification to admin
+      final height = (_profile!['height_cm'] as num?)?.toDouble();
+      double? bmi;
+      if (height != null && height > 0) {
+        final hm = height > 3 ? height / 100 : height;
+        bmi = double.parse((weightKg / (hm * hm)).toStringAsFixed(1));
+      }
+      _sendNotification(
+        patientName: _profile!['full_name']?.toString() ?? 'Paciente',
+        weightKg: weightKg,
+        measurementDate: dateStr,
+        bmi: bmi,
+        action: existing == null ? 'add' : 'update',
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -312,6 +360,29 @@ class _WeightScreenState extends State<WeightScreen> {
         );
       }
     }
+  }
+
+  void _sendNotification({
+    required String patientName,
+    required double weightKg,
+    required String measurementDate,
+    double? bmi,
+    required String action,
+  }) {
+    http.post(
+      Uri.parse('$_kAdminUrl/api/notify-weight'),
+      headers: {
+        'Content-Type': 'application/json',
+        'x-notify-secret': _kNotifySecret,
+      },
+      body: jsonEncode({
+        'patientName': patientName,
+        'weightKg': weightKg,
+        'measurementDate': measurementDate,
+        'bmi': bmi,
+        'action': action,
+      }),
+    ).catchError((_) => http.Response('', 200)); // fire-and-forget
   }
 
   Future<void> _deleteMeasurement(String id) async {
@@ -347,7 +418,14 @@ class _WeightScreenState extends State<WeightScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l.tr('weight_title')),
+        centerTitle: true,
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l.tr('app_name'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(l.tr('weight_title'), style: TextStyle(fontSize: 10, color: Colors.grey[500])),
+          ],
+        ),
       ),
       backgroundColor: kBackground,
       floatingActionButton: FloatingActionButton(
