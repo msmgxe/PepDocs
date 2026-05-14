@@ -21,6 +21,8 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const colorScheme = useColorScheme() ?? 'light';
@@ -49,7 +51,6 @@ export default function RegisterScreen() {
       });
 
       if (error) {
-        // Correo ya registrado → redirigir a login sin exponer detalles internos
         if (
           error.message.toLowerCase().includes('already registered') ||
           error.message.toLowerCase().includes('already been registered')
@@ -60,14 +61,11 @@ export default function RegisterScreen() {
             [{ text: 'Ir a Login', onPress: () => router.replace('/(auth)/login') }]
           );
         } else {
-          // Mensaje genérico para no exponer detalles del servidor
           Alert.alert('Error', 'No se pudo crear la cuenta. Intenta de nuevo.');
         }
       } else if (data.session) {
-        // Confirmación de email desactivada → directo a onboarding
         router.replace('/(onboarding)');
       } else if (data.user && !data.session) {
-        // Correo de confirmación enviado → pantalla OTP
         router.push({ pathname: '/(auth)/verify', params: { email } });
       }
     } finally {
@@ -78,7 +76,7 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={[styles.container, { backgroundColor: theme.background }]}
+      style={[styles.container, { backgroundColor: theme.lilacPale }]}
     >
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
@@ -86,7 +84,9 @@ export default function RegisterScreen() {
         </TouchableOpacity>
 
         <View style={styles.header}>
-          <MaterialCommunityIcons name="star-circle" size={48} color={theme.lilacDark} style={{ marginBottom: 10 }} />
+          <View style={[styles.logoCircle, { backgroundColor: theme.lilacDark }]}>
+            <Text style={styles.logoText}>P</Text>
+          </View>
           <Text style={[styles.title, { color: theme.lilacDark }]}>¡Crea tu cuenta!</Text>
           <Text style={[styles.subtitle, { color: theme.icon }]}>
             Solo necesitamos lo básico para comenzar
@@ -97,7 +97,7 @@ export default function RegisterScreen() {
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: theme.text }]}>Tu nombre completo</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.lilacMedium, color: theme.text }]}
+              style={[styles.input, { borderColor: theme.lilacMedium, color: theme.text, backgroundColor: theme.background }]}
               placeholder="Ej. María García"
               placeholderTextColor={theme.icon}
               autoCapitalize="words"
@@ -109,7 +109,7 @@ export default function RegisterScreen() {
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: theme.text }]}>Correo electrónico</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.lilacMedium, color: theme.text }]}
+              style={[styles.input, { borderColor: theme.lilacMedium, color: theme.text, backgroundColor: theme.background }]}
               placeholder="ej. maria@gmail.com"
               placeholderTextColor={theme.icon}
               autoCapitalize="none"
@@ -121,26 +121,44 @@ export default function RegisterScreen() {
 
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: theme.text }]}>Contraseña</Text>
-            <TextInput
-              style={[styles.input, { borderColor: theme.lilacMedium, color: theme.text }]}
-              placeholder="Mínimo 6 caracteres"
-              placeholderTextColor={theme.icon}
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
+            <View style={[styles.passwordContainer, { borderColor: theme.lilacMedium, backgroundColor: theme.background }]}>
+              <TextInput
+                style={[styles.passwordInput, { color: theme.text }]}
+                placeholder="Mínimo 6 caracteres"
+                placeholderTextColor={theme.icon}
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(s => !s)} style={styles.eyeBtn}>
+                <MaterialCommunityIcons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={22}
+                  color={theme.icon}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: theme.text }]}>Confirmar contraseña</Text>
-            <TextInput
-              style={[styles.input, { borderColor: theme.lilacMedium, color: theme.text }]}
-              placeholder="Repite tu contraseña"
-              placeholderTextColor={theme.icon}
-              secureTextEntry
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-            />
+            <View style={[styles.passwordContainer, { borderColor: theme.lilacMedium, backgroundColor: theme.background }]}>
+              <TextInput
+                style={[styles.passwordInput, { color: theme.text }]}
+                placeholder="Repite tu contraseña"
+                placeholderTextColor={theme.icon}
+                secureTextEntry={!showConfirm}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+              />
+              <TouchableOpacity onPress={() => setShowConfirm(s => !s)} style={styles.eyeBtn}>
+                <MaterialCommunityIcons
+                  name={showConfirm ? 'eye-off-outline' : 'eye-outline'}
+                  size={22}
+                  color={theme.icon}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <TouchableOpacity
@@ -173,7 +191,15 @@ const styles = StyleSheet.create({
   scrollContent: { flexGrow: 1, padding: 28, paddingTop: 60 },
   backButton: { marginBottom: 20, alignSelf: 'flex-start' },
   header: { alignItems: 'center', marginBottom: 36 },
-
+  logoCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  logoText: { color: '#fff', fontSize: 28, fontWeight: 'bold' },
   title: { fontSize: 26, fontWeight: 'bold', textAlign: 'center' },
   subtitle: { fontSize: 14, marginTop: 8, textAlign: 'center' },
   form: { gap: 18 },
@@ -185,6 +211,22 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 16,
     fontSize: 16,
+  },
+  passwordContainer: {
+    height: 52,
+    borderWidth: 2,
+    borderRadius: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  passwordInput: {
+    flex: 1,
+    fontSize: 16,
+    height: '100%',
+  },
+  eyeBtn: {
+    padding: 4,
   },
   button: {
     height: 56,

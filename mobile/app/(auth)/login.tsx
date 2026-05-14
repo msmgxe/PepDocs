@@ -9,6 +9,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const colorScheme = useColorScheme() ?? 'light';
@@ -25,14 +26,12 @@ export default function LoginScreen() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
-        // Detectar correo sin confirmar (mensaje inofensivo) sin exponer el error interno
         if (error.message.toLowerCase().includes('email not confirmed')) {
           Alert.alert(
             'Correo no confirmado',
             'Revisa tu bandeja de entrada y toca el enlace de confirmación antes de iniciar sesión.'
           );
         } else {
-          // Mensaje genérico para evitar enumeración de usuarios
           Alert.alert('Error', 'Correo o contraseña incorrectos.');
         }
       } else {
@@ -46,11 +45,13 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={[styles.container, { backgroundColor: theme.background }]}
+      style={[styles.container, { backgroundColor: theme.lilacPale }]}
     >
       <View style={styles.content}>
         <View style={styles.header}>
-          <MaterialCommunityIcons name="heart-pulse" size={60} color={theme.lilacDark} style={{ marginBottom: 10 }} />
+          <View style={[styles.logoCircle, { backgroundColor: theme.lilacDark }]}>
+            <Text style={styles.logoText}>P</Text>
+          </View>
           <Text style={[styles.title, { color: theme.lilacDark }]}>Pep Education</Text>
           <Text style={[styles.subtitle, { color: theme.icon }]}>Bienvenido de nuevo</Text>
         </View>
@@ -59,10 +60,11 @@ export default function LoginScreen() {
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: theme.text }]}>Correo Electrónico</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.lilacMedium, color: theme.text }]}
+              style={[styles.input, { borderColor: theme.lilacMedium, color: theme.text, backgroundColor: theme.background }]}
               placeholder="correo@ejemplo.com"
               placeholderTextColor={theme.icon}
               autoCapitalize="none"
+              keyboardType="email-address"
               value={email}
               onChangeText={setEmail}
             />
@@ -70,14 +72,23 @@ export default function LoginScreen() {
 
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: theme.text }]}>Contraseña</Text>
-            <TextInput
-              style={[styles.input, { borderColor: theme.lilacMedium, color: theme.text }]}
-              placeholder="••••••••"
-              placeholderTextColor={theme.icon}
-              secureTextEntry
-              value={password}
-              onChangeText={setPassword}
-            />
+            <View style={[styles.passwordContainer, { borderColor: theme.lilacMedium, backgroundColor: theme.background }]}>
+              <TextInput
+                style={[styles.passwordInput, { color: theme.text }]}
+                placeholder="••••••••"
+                placeholderTextColor={theme.icon}
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(s => !s)} style={styles.eyeBtn}>
+                <MaterialCommunityIcons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={22}
+                  color={theme.icon}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <TouchableOpacity
@@ -87,6 +98,15 @@ export default function LoginScreen() {
           >
             <Text style={styles.loginButtonText}>
               {loading ? 'Iniciando sesión...' : 'Entrar'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.forgotLink}
+            onPress={() => router.push('/(auth)/forgot-password')}
+          >
+            <Text style={[styles.forgotText, { color: theme.lilacDark }]}>
+              ¿Olvidaste tu contraseña?
             </Text>
           </TouchableOpacity>
 
@@ -117,8 +137,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 50,
   },
-  title: {
+  logoCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  logoText: {
+    color: '#fff',
     fontSize: 32,
+    fontWeight: 'bold',
+  },
+  title: {
+    fontSize: 28,
     fontWeight: 'bold',
   },
   subtitle: {
@@ -142,6 +175,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
   },
+  passwordContainer: {
+    height: 50,
+    borderWidth: 2,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  passwordInput: {
+    flex: 1,
+    fontSize: 16,
+    height: '100%',
+  },
+  eyeBtn: {
+    padding: 4,
+  },
   loginButton: {
     height: 55,
     borderRadius: 16,
@@ -159,8 +208,15 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: 'bold',
   },
+  forgotLink: {
+    alignItems: 'center',
+    marginTop: -8,
+  },
+  forgotText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
   registerLink: {
-    marginTop: 15,
     alignItems: 'center',
   },
   registerText: {
