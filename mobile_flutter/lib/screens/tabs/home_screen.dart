@@ -117,7 +117,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l.tr('app_name')),
+        centerTitle: true,
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              l.tr('app_name'),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              l.tr('app_subtitle'),
+              style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.person_outline),
@@ -270,6 +283,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ),
+
+                  // BMI legend card — shown only when BMI is available
+                  if (bmi != null) ...[
+                    const SizedBox(height: 8),
+                    _BmiLegendCard(),
+                  ],
 
                   const SizedBox(height: 16),
 
@@ -428,6 +447,59 @@ class _InfoChip extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _BmiLegendCard extends StatelessWidget {
+  const _BmiLegendCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = LanguageService.instance;
+    final rows = [
+      (const Color(0xFF5C6BC0), '< 18.5',      l.tr('bmi_underweight')),
+      (const Color(0xFF43A047), '18.5 – 24.9', l.tr('bmi_normal')),
+      (const Color(0xFFFB8C00), '25 – 29.9',   l.tr('bmi_overweight')),
+      (const Color(0xFFEF6C00), '30 – 34.9',   l.tr('bmi_label_obesity1')),
+      (const Color(0xFFE53935), '≥ 35',         l.tr('bmi_label_obesity2')),
+    ];
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.info_outline, size: 16, color: Colors.grey[500]),
+                const SizedBox(width: 6),
+                Text(
+                  l.tr('bmi_legend_title'),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l.tr('bmi_formula'),
+              style: TextStyle(fontSize: 11, color: Colors.grey[500], fontStyle: FontStyle.italic),
+            ),
+            const SizedBox(height: 8),
+            ...rows.map((r) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                children: [
+                  Container(width: 10, height: 10, decoration: BoxDecoration(color: r.$1, shape: BoxShape.circle)),
+                  const SizedBox(width: 8),
+                  SizedBox(width: 82, child: Text(r.$2, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600))),
+                  Expanded(child: Text(r.$3, style: TextStyle(fontSize: 11, color: Colors.grey[700]))),
+                ],
+              ),
+            )),
+          ],
+        ),
       ),
     );
   }

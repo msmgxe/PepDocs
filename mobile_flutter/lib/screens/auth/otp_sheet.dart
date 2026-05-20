@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../constants/theme.dart';
@@ -27,11 +28,30 @@ class _OtpSheetState extends State<OtpSheet> {
   final _otpController = TextEditingController();
   bool _loading = false;
   String? _errorMsg;
+  int _countdown = 0;
+  Timer? _timer;
 
   @override
   void dispose() {
     _otpController.dispose();
+    _timer?.cancel();
     super.dispose();
+  }
+
+  void _startCountdown() {
+    _countdown = 300;
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) { t.cancel(); return; }
+      setState(() { _countdown--; });
+      if (_countdown <= 0) t.cancel();
+    });
+  }
+
+  String _fmtCountdown() {
+    final m = _countdown ~/ 60;
+    final s = _countdown % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
   }
 
   Future<void> _verify() async {
@@ -56,7 +76,7 @@ class _OtpSheetState extends State<OtpSheet> {
       if (mounted) {
         setState(() {
           _loading = false;
-          _errorMsg = e.message;
+          _errorMsg = _friendlyError(e.message);
         });
       }
     } catch (e) {
@@ -70,10 +90,12 @@ class _OtpSheetState extends State<OtpSheet> {
   }
 
   Future<void> _resend() async {
+    if (_countdown > 0 || _loading) return;
     setState(() => _loading = true);
     try {
       await supabase.auth.resend(type: OtpType.email, email: widget.email);
       if (mounted) {
+        _startCountdown();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Código reenviado. Revisa tu correo.'),
@@ -81,30 +103,45 @@ class _OtpSheetState extends State<OtpSheet> {
           ),
         );
       }
-    } catch (e) {
-      // ignore resend errors silently
+    } on AuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_friendlyError(e.message)), backgroundColor: kError),
+        );
+      }
+    } catch (_) {
+      // ignore other resend errors silently
     } finally {
-      if (mounted) { setState(() => _loading = false); }
+      if (mounted) setState(() => _loading = false);
     }
+  }
+
+  String _friendlyError(String msg) {
+    final m = msg.toLowerCase();
+    if (m.contains('rate limit')) return 'Demasiados intentos. Espera unos minutos e intenta de nuevo.';
+    if (m.contains('already registered')) return 'Este correo ya tiene una cuenta. Inicia sesión.';
+    if (m.contains('invalid')) return 'Código incorrecto. Verifica e intenta de nuevo.';
+    return msg;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: EdgeInsets.only(
-        left: 28,
-        right: 28,
-        top: 28,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 28,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final maxHeight = MediaQuery.of(context).size.height * 0.85;
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboardHeight),
+      child: Container(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(28, 28, 28, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
           // Handle bar
           Center(
             child: Container(
@@ -138,7 +175,7 @@ class _OtpSheetState extends State<OtpSheet> {
           TextField(
             controller: _otpController,
             keyboardType: TextInputType.number,
-            maxLength: 8,
+            maxLength: 6,
             textAlign: TextAlign.center,
             autofocus: true,
             style: const TextStyle(
@@ -178,15 +215,23 @@ class _OtpSheetState extends State<OtpSheet> {
           ),
           const SizedBox(height: 12),
 
-          TextButton(
-            onPressed: _loading ? null : _resend,
-            child: Text(
-              'Reenviar código',
-              style: TextStyle(color: kPrimary),
-            ),
-          ),
+          _countdown > 0
+              ? Text(
+                  'Reenviar código en ${_fmtCountdown()}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                )
+              : TextButton(
+                  onPressed: _loading ? null : _resend,
+                  child: Text(
+                    '¿No recibiste el código? Reenviar',
+                    style: TextStyle(color: kPrimary),
+                  ),
+                ),
           const SizedBox(height: 8),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }

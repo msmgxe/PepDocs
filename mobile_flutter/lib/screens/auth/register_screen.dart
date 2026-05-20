@@ -42,8 +42,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     } on AuthException catch (e) {
       if (mounted) {
+        final m = e.message.toLowerCase();
+        final friendly = m.contains('rate limit')
+            ? 'Demasiados intentos. Espera unos minutos e intenta de nuevo.'
+            : m.contains('already registered')
+                ? 'Este correo ya tiene una cuenta. Inicia sesión.'
+                : e.message;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: kError),
+          SnackBar(content: Text(friendly), backgroundColor: kError),
         );
       }
     } catch (e) {
@@ -83,7 +89,72 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         fontWeight: FontWeight.bold,
                         color: kPrimary),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
+
+                  // ── Selector de idioma ──────────────────────────────────
+                  Text(
+                    l.tr('profile_language'),
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 8),
+                  ListenableBuilder(
+                    listenable: LanguageService.instance,
+                    builder: (_, _) {
+                      final current = LanguageService.instance.lang;
+                      return Row(
+                        children: [
+                          for (final lang in [
+                            ('es', 'Español', '🇲🇽'),
+                            ('en', 'English', '🇺🇸'),
+                            ('pt', 'Português', '🇧🇷'),
+                          ])
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: GestureDetector(
+                                  onTap: () =>
+                                      LanguageService.instance.setLanguage(lang.$1),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 150),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: current == lang.$1
+                                          ? kPrimary
+                                          : kPrimary.withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Text(lang.$3,
+                                            style: const TextStyle(fontSize: 20)),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          lang.$2,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: current == lang.$1
+                                                ? Colors.white
+                                                : kPrimary,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  // ───────────────────────────────────────────────────────
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,

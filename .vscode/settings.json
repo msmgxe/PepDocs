@@ -4,7 +4,11 @@
         "**/node_modules/**",
         "**/.git/**",
         "**/build/**",
-        "**/.gradle/**"
+        "**/.gradle/**",
+        "**/mobile/android/**",
+        "**/mobile_flutter/android/**",
+        "**/@react-native/gradle-plugin/**",
+        "**/expo-modules-autolinking/**"
     ],
     "java.project.resourceFilters": [
         "node_modules",
@@ -15,9 +19,12 @@
     "java.import.gradle.enabled": false,
     "java.import.maven.enabled": false,
     "java.autobuild.enabled": false,
+    "java.jdt.ls.lombokSupport.enabled": false,
     "files.watcherExclude": {
         "**/node_modules/**": true,
         "**/.gradle/**": true,
-        "**/build/**": true
+        "**/build/**": true,
+        "**/mobile/android/**": true,
+        "**/mobile_flutter/android/**": true
     }
 }

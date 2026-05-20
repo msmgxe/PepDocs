@@ -140,3 +140,14 @@ Future<void> updateCalendarEvent(
 Future<void> deleteCalendarEvent(String id) async {
   await supabase.from('calendar_events').delete().eq('id', id);
 }
+
+// ─── Tips & Suggestions ──────────────────────────────────────────────────────
+
+Future<List<Map<String, dynamic>>> getTips() async {
+  final data = await supabase
+      .from('tips')
+      .select()
+      .eq('is_published', true)
+      .order('published_at', ascending: false);
+  return List<Map<String, dynamic>>.from(data);
+}

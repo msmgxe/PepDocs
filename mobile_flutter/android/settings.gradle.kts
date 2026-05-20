@@ -1,3 +1,5 @@
+rootProject.name = "pep_education_flutter"
+
 pluginManagement {
     val flutterSdkPath =
         run {

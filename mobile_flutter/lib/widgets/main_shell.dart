@@ -7,6 +7,7 @@ import '../screens/tabs/home_screen.dart';
 import '../screens/tabs/weight_screen.dart';
 import '../screens/tabs/progress_screen.dart';
 import '../screens/tabs/reminders_screen.dart';
+import '../screens/tabs/tips_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -25,6 +26,7 @@ class _MainShellState extends State<MainShell> {
     WeightScreen(),
     ProgressScreen(),
     RemindersScreen(),
+    TipsScreen(),
   ];
 
   @override
@@ -93,6 +95,11 @@ class _MainShellState extends State<MainShell> {
                 icon: const Icon(Icons.calendar_month_outlined),
                 activeIcon: const Icon(Icons.calendar_month),
                 label: l.tr('nav_reminders'),
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.tips_and_updates_outlined),
+                activeIcon: const Icon(Icons.tips_and_updates),
+                label: l.tr('nav_tips'),
               ),
             ],
           ),

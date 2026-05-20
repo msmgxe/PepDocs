@@ -126,7 +126,16 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final dateLocale = l.dateLocale;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l.tr('progress_title'))),
+      appBar: AppBar(
+        centerTitle: true,
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l.tr('app_name'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(l.tr('progress_title'), style: TextStyle(fontSize: 10, color: Colors.grey[500])),
+          ],
+        ),
+      ),
       backgroundColor: kBackground,
       body: _loading
           ? const Center(child: CircularProgressIndicator())

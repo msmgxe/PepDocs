@@ -10,9 +10,10 @@ const Map<String, Map<String, String>> appTranslations = {
 
     // Navigation
     'nav_home': 'Inicio',
-    'nav_weight': 'Peso',
+    'nav_weight': 'Pesajes',
     'nav_progress': 'Progreso',
     'nav_reminders': 'Recordatorios',
+    'nav_tips': 'Tips',
 
     // Auth — login
     'login_email': 'Correo electrónico',
@@ -85,9 +86,9 @@ const Map<String, Map<String, String>> appTranslations = {
     'home_greeting_afternoon': 'Buenas tardes,',
     'home_greeting_evening': 'Buenas noches,',
     'home_bmi': 'Índice de Masa Corporal',
-    'home_next_appointment': 'Próxima cita',
-    'home_no_appointments': 'Sin citas programadas',
-    'home_default_appointment': 'Cita',
+    'home_next_appointment': 'Consulta directa',
+    'home_no_appointments': 'Sin consultas programadas',
+    'home_default_appointment': 'Consulta',
     'home_current_weight': 'Peso actual',
     'home_target_weight': 'Peso objetivo',
     'info_height': 'Estatura',
@@ -102,7 +103,7 @@ const Map<String, Map<String, String>> appTranslations = {
     'bmi_normal_short': 'Normal',
 
     // Weight screen
-    'weight_title': 'Peso',
+    'weight_title': 'Registro de Pesos',
     'weight_empty': 'Sin registros aún',
     'weight_empty_hint': 'Toca + para agregar tu primer registro',
     'weight_add_dialog': 'Registrar peso',
@@ -190,6 +191,29 @@ const Map<String, Map<String, String>> appTranslations = {
     'sug_move_title': 'Movimiento',
     'sug_move_senior_desc': '30 min de caminata a paso ligero',
     'sug_move_active_desc': '30 min de actividad física',
+
+    // Tips & Sugerencias screen
+    'tips_title': 'Tips y Sugerencias',
+    'tips_empty': 'Aún no hay tips publicados',
+    'tips_empty_hint': 'El equipo de nutrición publicará recomendaciones pronto',
+    'tips_cat_tip': 'Tip',
+    'tips_cat_sugerencia': 'Sugerencia',
+    'tips_cat_nutricion': 'Nutrición',
+    'tips_cat_ejercicio': 'Ejercicio',
+    'tips_cat_motivacion': 'Motivación',
+    'tips_cat_hidratacion': 'Hidratación',
+    'tips_cat_general': 'General',
+
+    // BMI legend (home screen)
+    'bmi_legend_title': 'Rangos del IMC',
+    'bmi_formula': 'IMC = peso (kg) ÷ talla² (m)',
+    'bmi_range_underweight': '< 18.5',
+    'bmi_range_normal': '18.5 – 24.9',
+    'bmi_range_overweight': '25 – 29.9',
+    'bmi_range_obesity1': '30 – 34.9',
+    'bmi_range_obesity2': '≥ 35',
+    'bmi_label_obesity1': 'Obesidad T1',
+    'bmi_label_obesity2': 'Obesidad T2',
   },
 
   // ────────────────────────────── ENGLISH ──────────────────────────────
@@ -200,9 +224,10 @@ const Map<String, Map<String, String>> appTranslations = {
 
     // Navigation
     'nav_home': 'Home',
-    'nav_weight': 'Weight',
+    'nav_weight': 'Weigh-ins',
     'nav_progress': 'Progress',
     'nav_reminders': 'Reminders',
+    'nav_tips': 'Tips',
 
     // Auth — login
     'login_email': 'Email address',
@@ -275,9 +300,9 @@ const Map<String, Map<String, String>> appTranslations = {
     'home_greeting_afternoon': 'Good afternoon,',
     'home_greeting_evening': 'Good evening,',
     'home_bmi': 'Body Mass Index',
-    'home_next_appointment': 'Next appointment',
-    'home_no_appointments': 'No appointments scheduled',
-    'home_default_appointment': 'Appointment',
+    'home_next_appointment': 'Direct consultation',
+    'home_no_appointments': 'No consultations scheduled',
+    'home_default_appointment': 'Consultation',
     'home_current_weight': 'Current weight',
     'home_target_weight': 'Target weight',
     'info_height': 'Height',
@@ -292,7 +317,7 @@ const Map<String, Map<String, String>> appTranslations = {
     'bmi_normal_short': 'Normal',
 
     // Weight screen
-    'weight_title': 'Weight',
+    'weight_title': 'Weight Log',
     'weight_empty': 'No records yet',
     'weight_empty_hint': 'Tap + to add your first entry',
     'weight_add_dialog': 'Log weight',
@@ -381,6 +406,29 @@ const Map<String, Map<String, String>> appTranslations = {
     'sug_move_title': 'Movement',
     'sug_move_senior_desc': '30 min of brisk walking',
     'sug_move_active_desc': '30 min of physical activity',
+
+    // Tips screen
+    'tips_title': 'Tips & Suggestions',
+    'tips_empty': 'No tips published yet',
+    'tips_empty_hint': 'The nutrition team will publish recommendations soon',
+    'tips_cat_tip': 'Tip',
+    'tips_cat_sugerencia': 'Suggestion',
+    'tips_cat_nutricion': 'Nutrition',
+    'tips_cat_ejercicio': 'Exercise',
+    'tips_cat_motivacion': 'Motivation',
+    'tips_cat_hidratacion': 'Hydration',
+    'tips_cat_general': 'General',
+
+    // BMI legend
+    'bmi_legend_title': 'BMI Ranges',
+    'bmi_formula': 'BMI = weight (kg) ÷ height² (m)',
+    'bmi_range_underweight': '< 18.5',
+    'bmi_range_normal': '18.5 – 24.9',
+    'bmi_range_overweight': '25 – 29.9',
+    'bmi_range_obesity1': '30 – 34.9',
+    'bmi_range_obesity2': '≥ 35',
+    'bmi_label_obesity1': 'Obesity T1',
+    'bmi_label_obesity2': 'Obesity T2',
   },
 
   // ────────────────────────────── PORTUGUÊS ──────────────────────────────
@@ -391,9 +439,10 @@ const Map<String, Map<String, String>> appTranslations = {
 
     // Navigation
     'nav_home': 'Início',
-    'nav_weight': 'Peso',
+    'nav_weight': 'Pesagens',
     'nav_progress': 'Progresso',
     'nav_reminders': 'Lembretes',
+    'nav_tips': 'Tips',
 
     // Auth — login
     'login_email': 'E-mail',
@@ -466,7 +515,7 @@ const Map<String, Map<String, String>> appTranslations = {
     'home_greeting_afternoon': 'Boa tarde,',
     'home_greeting_evening': 'Boa noite,',
     'home_bmi': 'Índice de Massa Corporal',
-    'home_next_appointment': 'Próxima consulta',
+    'home_next_appointment': 'Consulta direta',
     'home_no_appointments': 'Sem consultas agendadas',
     'home_default_appointment': 'Consulta',
     'home_current_weight': 'Peso atual',
@@ -483,7 +532,7 @@ const Map<String, Map<String, String>> appTranslations = {
     'bmi_normal_short': 'Normal',
 
     // Weight screen
-    'weight_title': 'Peso',
+    'weight_title': 'Registro de Pesos',
     'weight_empty': 'Sem registros ainda',
     'weight_empty_hint': 'Toque + para adicionar seu primeiro registro',
     'weight_add_dialog': 'Registrar peso',
@@ -572,5 +621,28 @@ const Map<String, Map<String, String>> appTranslations = {
     'sug_move_title': 'Movimento',
     'sug_move_senior_desc': '30 min de caminhada leve',
     'sug_move_active_desc': '30 min de atividade física',
+
+    // Tips screen
+    'tips_title': 'Tips e Sugestões',
+    'tips_empty': 'Nenhum tip publicado ainda',
+    'tips_empty_hint': 'A equipe de nutrição publicará recomendações em breve',
+    'tips_cat_tip': 'Tip',
+    'tips_cat_sugerencia': 'Sugestão',
+    'tips_cat_nutricion': 'Nutrição',
+    'tips_cat_ejercicio': 'Exercício',
+    'tips_cat_motivacion': 'Motivação',
+    'tips_cat_hidratacion': 'Hidratação',
+    'tips_cat_general': 'Geral',
+
+    // BMI legend
+    'bmi_legend_title': 'Faixas do IMC',
+    'bmi_formula': 'IMC = peso (kg) ÷ altura² (m)',
+    'bmi_range_underweight': '< 18.5',
+    'bmi_range_normal': '18.5 – 24.9',
+    'bmi_range_overweight': '25 – 29.9',
+    'bmi_range_obesity1': '30 – 34.9',
+    'bmi_range_obesity2': '≥ 35',
+    'bmi_label_obesity1': 'Obesidade G1',
+    'bmi_label_obesity2': 'Obesidade G2',
   },
 };
